@@ -1,0 +1,189 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+.vertical-scrollbar,
+.dash-vertical-scrollbar,
+.zero-size-vertical-scrollbar {
+  overflow-y: scroll;
+}
+
+.horizontal-scrollbar,
+.dash-horizontal-scrollbar,
+.zero-size-horizontal-scrollbar {
+  overflow-x: scroll;
+}
+
+.zero-size-vertical-scrollbar::-webkit-scrollbar {
+  width: 0px;
+}
+
+.zero-size-horizontal-scrollbar::-webkit-scrollbar {
+  height: 0px;
+}
+
+.vertical-scrollbar::-webkit-scrollbar,
+.dash-vertical-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  background-color: rgb(5 46 22 / 0.3);
+  border-radius: 20px;
+}
+
+.horizontal-scrollbar::-webkit-scrollbar,
+.dash-horizontal-scrollbar::-webkit-scrollbar {
+  height: 5px;
+  background-color: rgb(5 46 22 / 0.3);
+  border-radius: 20px;
+}
+
+.horizontal-scrollbar::-webkit-scrollbar-thumb,
+.vertical-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgb(5 46 22);
+  border-radius: 20px;
+}
+.dash-horizontal-scrollbar::-webkit-scrollbar-thumb,
+.dash-vertical-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgb(107, 33, 168);
+  border-radius: 20px;
+}
+
+
+.custom-otp-input-sample {
+  width: 48px;
+  height: 48px;
+  font-size: 24px;
+  appearance: none;
+  text-align: center;
+  transition: all 0.2s;
+  border-radius: 0;
+  border: 1px solid var(--surface-400);
+  background: transparent;
+  outline-offset: -2px;
+  outline-color: transparent;
+  border-right: 0 none;
+  transition: outline-color 0.3s;
+  color: var(--text-color);
+}
+* {
+  box-sizing: border-box;
+}
+
+.vertical-scrollbar,
+.dash-vertical-scrollbar,
+.zero-size-vertical-scrollbar {
+  overflow-y: scroll;
+}
+
+.horizontal-scrollbar,
+.dash-horizontal-scrollbar,
+.zero-size-horizontal-scrollbar {
+  overflow-x: scroll;
+}
+
+.zero-size-vertical-scrollbar::-webkit-scrollbar {
+  width: 0px;
+}
+
+.zero-size-horizontal-scrollbar::-webkit-scrollbar {
+  height: 0px;
+}
+
+.vertical-scrollbar::-webkit-scrollbar,
+.dash-vertical-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  background-color: rgb(5 46 22 / 0.3);
+  border-radius: 20px;
+}
+
+.horizontal-scrollbar::-webkit-scrollbar,
+.dash-horizontal-scrollbar::-webkit-scrollbar {
+  height: 5px;
+  background-color: rgb(5 46 22 / 0.3);
+  border-radius: 20px;
+}
+
+.horizontal-scrollbar::-webkit-scrollbar-thumb,
+.vertical-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgb(5 46 22);
+  border-radius: 20px;
+}
+.dash-horizontal-scrollbar::-webkit-scrollbar-thumb,
+.dash-vertical-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgb(107, 33, 168);
+  border-radius: 20px;
+}* {
+  box-sizing: border-box;
+}
+
+.vertical-scrollbar,
+.dash-vertical-scrollbar,
+.zero-size-vertical-scrollbar {
+  overflow-y: scroll;
+}
+
+.horizontal-scrollbar,
+.dash-horizontal-scrollbar,
+.zero-size-horizontal-scrollbar {
+  overflow-x: scroll;
+}
+
+.zero-size-vertical-scrollbar::-webkit-scrollbar {
+  width: 0px;
+}
+
+.zero-size-horizontal-scrollbar::-webkit-scrollbar {
+  height: 0px;
+}
+
+.vertical-scrollbar::-webkit-scrollbar,
+.dash-vertical-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  background-color: rgb(5 46 22 / 0.3);
+  border-radius: 20px;
+}
+
+.horizontal-scrollbar::-webkit-scrollbar,
+.dash-horizontal-scrollbar::-webkit-scrollbar {
+  height: 5px;
+  background-color: rgb(5 46 22 / 0.3);
+  border-radius: 20px;
+}
+
+.horizontal-scrollbar::-webkit-scrollbar-thumb,
+.vertical-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgb(5 46 22);
+  border-radius: 20px;
+}
+.dash-horizontal-scrollbar::-webkit-scrollbar-thumb,
+.dash-vertical-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgb(107, 33, 168);
+  border-radius: 20px;
+}
+
+
+.custom-otp-input-sample:focus {
+  outline: 2px solid var(--primary-color);
+}
+
+.custom-otp-input-sample:first-child,
+.custom-otp-input-sample:nth-child(4) {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+.custom-otp-input-sample:nth-child(4) {
+  margin-left: 1em;
+}
+
+.custom-otp-input-sample:nth-child(3),
+.custom-otp-input-sample:last-child {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+  border-right-width: 1px;
+  border-right-style: solid;
+  border-color: var(--surface-400);
+}
