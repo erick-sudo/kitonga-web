@@ -72,7 +72,7 @@ export const RequestOTP = ({
             variant="filled"
             required
             fullWidth
-            label="Your email address"
+            label="Email"
             autoComplete="email"
             value={email}
             onChange={(

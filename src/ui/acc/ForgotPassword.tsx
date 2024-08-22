@@ -7,7 +7,11 @@ import {
   Stepper,
   Typography,
 } from "@mui/material";
-import { EnvelopeIcon, KeyIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowLongLeftIcon,
+  EnvelopeIcon,
+  KeyIcon,
+} from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { RequestOTP } from "./RequestOtp";
 import { NavLink } from "react-router-dom";
@@ -60,7 +64,7 @@ export const PASSWORD_RESET_STEPS = {
 export const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState(null);
-  const [step, setStep] = useState(1) // PASSWORD_RESET_STEPS.REQUEST_OTP);
+  const [step, setStep] = useState(1); // PASSWORD_RESET_STEPS.REQUEST_OTP);
 
   useEffect(() => {
     const cachedEmail = sessionStorage.getItem("forgot-password-email");
@@ -135,14 +139,17 @@ export const ForgotPassword = () => {
               Create new password
             </StepLabel>
             <StepContent>
+              <NavLink
+                to="/sign-in"
+                className="flex items-center gap-2 mb-4 text-sm text-teal-800 hover:text-teal-700 duration-300"
+              >
+                <ArrowLongLeftIcon height={32} />
+                <span>Back To Login</span>
+              </NavLink>
               <ResetPassword email={email} setStep={setStep} />
             </StepContent>
           </Step>
         </Stepper>
-
-        <NavLink to="/sign-in" className="mx-auto text-sm text-teal-800 hover:text-teal-700 duration-300">
-          Back To Login
-        </NavLink>
       </div>
     </div>
   );

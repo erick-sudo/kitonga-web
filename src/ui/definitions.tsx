@@ -1,8 +1,15 @@
+import { ChangeEventHandler, FormEvent } from "react";
 import * as yup from "yup";
 
 export type ReactStateSetter<T> = React.Dispatch<React.SetStateAction<T>>;
 
 export type ReactState<T> = [T, ReactStateSetter<T>];
+
+export type OnInputChangeHandler = ChangeEventHandler<
+  HTMLInputElement | HTMLTextAreaElement
+>;
+
+export type OnFormSubmitEvent = FormEvent<HTMLFormElement>;
 
 export const emailSchema = yup.object().shape({
   email: yup

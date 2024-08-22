@@ -15,7 +15,7 @@ export const APIS = {
     showClientCaseStatusTally: `${baseUrl}/stats/clients/<:clientId>/cases/status/tally`,
   },
   pagination: {
-    getCases: `${baseUrl}/pages/cases/`,
+    getCases: `${baseUrl}/pages/cases/<:page>/<:size>`,
     getClients: `${baseUrl}/pages/clients/`,
     filter: {
       filterCases: `${baseUrl}/filter/cases/<:q>/<:v>`,

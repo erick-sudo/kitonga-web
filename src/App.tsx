@@ -8,15 +8,16 @@ import { Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
 import { Signin } from "./ui/acc/Signin";
 import { ForgotPassword } from "./ui/acc/ForgotPassword";
-import "primereact/resources/themes/tailwind-light/theme.css";
+import NotSignedIn from "./ui/NotSignedIn";
+// import "primereact/resources/themes/tailwind-light/theme.css";
 
 function App() {
   return (
     <div className="">
       <Routes>
-        <Route path="" element={<Home />} />
+        <Route path="/" element={<Home />} />
         <Route
-          path="dashboard"
+          path="/dashboard/*"
           element={
             <TanstackSuspense
               fallback={<div>Loading...</div>}
@@ -27,10 +28,12 @@ function App() {
                   console.log("Logged out.");
                 };
 
-                console.log(data);
-
                 if (!data) {
-                  return <div>Could not find current user!</div>;
+                  return (
+                    <div>
+                      <NotSignedIn />
+                    </div>
+                  );
                 }
 
                 return (
@@ -42,8 +45,8 @@ function App() {
             />
           }
         />
-        <Route path="sign-in" element={<Signin />} />
-        <Route path="forgot-password" element={<ForgotPassword />} />
+        <Route path="/sign-in" element={<Signin />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>
     </div>
   );

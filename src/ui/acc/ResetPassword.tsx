@@ -6,14 +6,14 @@ import {
   InputAdornment,
   TextField,
 } from "@mui/material";
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { InputOtp, InputOtpChangeEvent } from "primereact/inputotp";
 import { PASSWORD_RESET_STEPS } from "./ForgotPassword";
-import { ReactStateSetter } from "../definitions";
+import { OnFormSubmitEvent, ReactStateSetter } from "../definitions";
 import { axiosPost } from "../../lib/axiosLib";
 import { APIS } from "../../lib/apis";
 import { MUI_STYLES } from "../../lib/MUI_STYLES";
+import { InputOtp, InputOtpChangeEvent } from "primereact/inputotp";
 
 export function ResetPassword({
   email,
@@ -37,7 +37,7 @@ export function ResetPassword({
     message: "",
   });
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: OnFormSubmitEvent) => {
     e.preventDefault();
     setLoading(true);
     axiosPost(APIS.account.changePassword, {
@@ -72,7 +72,7 @@ export function ResetPassword({
 
   return (
     <div className="">
-      <div className="">
+      <div className="grid gap-4">
         {status.severity && (
           <Alert severity={status.severity}>{status.message}</Alert>
         )}
@@ -190,19 +190,18 @@ export function ResetPassword({
 
           <div>
             <h3 className="pb-4 text-teal-800 font-bold">Verification code</h3>
-            <div className="w-max mx-auto">
+            <div className="w-ma mx-auto">
               <InputOtp
-                className="custom-otp-input-sample"
                 integerOnly
-                pt={{
-                  input: {
-                    className: "custom-otp-input-sample"
-                  }
-                }}
                 value={otp}
                 onChange={(e: InputOtpChangeEvent) =>
                   setOtp(e.value ? e.value : "")
                 }
+                pt={{
+                  input: {
+                    className: "custom-otp-input-sample",
+                  },
+                }}
                 length={6}
                 style={{ gap: 0 }}
               />
@@ -213,7 +212,7 @@ export function ResetPassword({
             <button
               type="button"
               onClick={() => setStep(PASSWORD_RESET_STEPS.REQUEST_OTP)}
-              className="text-teal-800 hover:text-teal-700 duration-300 disabled:text-gray-300 text-start text-sm"
+              className="text-teal-800 w-max hover:text-teal-700 duration-300 disabled:text-gray-300 text-start text-sm"
             >
               Resend code
             </button>
