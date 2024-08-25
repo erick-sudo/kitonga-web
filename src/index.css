@@ -6,6 +6,18 @@
   box-sizing: border-box;
 }
 
+.shimmer {
+  @apply relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1s_infinite] before:bg-gradient-to-r before:from-transparent before:to-transparent;
+}
+
+.shimmer-gray-200 {
+  @apply bg-gray-200 shimmer before:via-gray-500/50 before:animate-[shimmer_1s_infinite];
+}
+
+.shimmer-stone-500 {
+  @apply bg-stone-500 shimmer before:via-stone-500/50 before:animate-[shimmer_1s_infinite];
+}
+
 .vertical-scrollbar,
 .dash-vertical-scrollbar,
 .zero-size-vertical-scrollbar {
@@ -50,7 +62,6 @@
   background-color: rgb(107, 33, 168);
   border-radius: 20px;
 }
-
 
 .custom-otp-input-sample {
   width: 48px;
@@ -115,7 +126,8 @@
 .dash-vertical-scrollbar::-webkit-scrollbar-thumb {
   background-color: rgb(107, 33, 168);
   border-radius: 20px;
-}* {
+}
+* {
   box-sizing: border-box;
 }
 
@@ -163,7 +175,6 @@
   background-color: rgb(107, 33, 168);
   border-radius: 20px;
 }
-
 
 .custom-otp-input-sample:focus {
   outline: 2px solid var(--primary-color);

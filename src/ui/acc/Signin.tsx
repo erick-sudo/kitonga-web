@@ -16,9 +16,10 @@ import {
   VisibilityOff,
 } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 export function Signin() {
+  const navigate = useNavigate();
   const { startLoading, stopLoading, loading } = useContext(AppContext);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -52,6 +53,7 @@ export function Signin() {
       .then((_res) => {
         setError("");
         reset();
+        navigate("/dashboard");
       })
       .catch((err) => {
         if (err?.response?.data) {

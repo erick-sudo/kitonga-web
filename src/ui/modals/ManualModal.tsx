@@ -16,8 +16,8 @@ export const ManualModal: React.FC<ModalProps> = ({
         anchorClassName={anchorClassName}
         anchorContent={anchorContent}
       >
-        <div className="fixed inset-0" style={{ zIndex: 70 }}>
-          <div className="max-w-xl mx-auto p-4 grid gap-4">
+        <div className="fixed inset-0 vertical-scrollbar" style={{ zIndex: 70 }}>
+          <div className="w-max mx-auto p-4 grid gap-4">
             <div className="flex justify-end">
               <button
                 onClick={() => setOpen(false)}

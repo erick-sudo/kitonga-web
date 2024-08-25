@@ -8,3 +8,10 @@ export function snakeCaseToTitleCase(inputString: string) {
     .map((c) => capitalize(c))
     .join(" ");
 }
+
+export const formatCurrency = (amount: number) => {
+  return amount.toLocaleString("en-US", {
+    style: "currency",
+    currency: "KSH",
+  });
+};

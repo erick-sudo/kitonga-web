@@ -95,7 +95,35 @@ export const MUI_STYLES = {
       border: "none",
     },
   },
-
+FilledInputTextField3: {
+    "& .MuiFilledInput-root": {
+      backgroundColor: "rgba(0, 0, 0, 0)",
+      border: "solid 1px rgba(0, 0, 0, .1)",
+      borderTopLeftRadius: "8px",
+      borderTopRightRadius: "8px",
+      borderBottomLeftRadius: "8px",
+      borderBottomRightRadius: "8px"
+    },
+    "& label.Mui-focused": {
+      color: "black",
+    },
+    "& .MuiFilledInput-root:hover": {
+      // Background color on hover
+      backgroundColor: "transparent",
+    },
+    "& .MuiFilledInput-underline:before": {
+      // Underline color
+      border: "none",
+    },
+    "& .MuiFilledInput-underline:after": {
+      // Color when focused
+      border: "none",
+    },
+    "& .MuiFilledInput-underline:hover:before": {
+      // Hover color
+      border: "none",
+    },
+  },
   SelectField: {
     width: "100%",
     backgroundColor: "white",

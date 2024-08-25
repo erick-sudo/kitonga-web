@@ -7,16 +7,67 @@ import { Analytics } from "./Analytics";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import {
   Bars4Icon,
+  ChartPieIcon,
   ChevronLeftIcon,
+  Cog8ToothIcon,
+  PlusIcon,
+  UserPlusIcon,
+  UsersIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { capitalize } from "../lib/utils";
 import { ReactStateSetter } from "../ui/definitions";
 import { KitongaColorScheme } from "../lib/MUI_STYLES";
 import { Cases } from "./cases/Cases";
+import { Folder } from "@mui/icons-material";
 
 function NavigationLinks() {
-  return <div></div>;
+  return (
+    <div>
+      <NavLink
+        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-4 py-1 rounded"
+        to="/dashboard"
+      >
+        <ChartPieIcon height={20} />
+        <span>Analytics</span>
+      </NavLink>
+      <NavLink
+        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-4 py-1 rounded"
+        to="/dashboard/cases"
+      >
+        <Folder fontSize="small" />
+        <span>Cases</span>
+      </NavLink>
+      <NavLink
+        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-4 py-1 rounded"
+        to="/dashboard/cases/NEW"
+      >
+        <PlusIcon height={20} />
+        <span>New Case</span>
+      </NavLink>
+      <NavLink
+        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-4 py-1 rounded"
+        to="/dashboard/clients"
+      >
+        <UsersIcon height={20} />
+        <span>Clients</span>
+      </NavLink>
+      <NavLink
+        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-4 py-1 rounded"
+        to="/dashboard/users"
+      >
+        <UserPlusIcon height={20} />
+        <span>Users</span>
+      </NavLink>
+      <NavLink
+        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-4 py-1 rounded"
+        to="/dashboard/settings"
+      >
+        <Cog8ToothIcon height={20} />
+        <span>Settings</span>
+      </NavLink>
+    </div>
+  );
 }
 
 const specialNavigationSegments: string[] = [];
@@ -30,7 +81,7 @@ export function Dashboard() {
   const { pathname } = useLocation();
 
   const sideNavSprings = useSpring({
-    width: isMdOrLarger && !hide ? 260 : 0,
+    width: isMdOrLarger && !hide ? 200 : 0,
     opacity: isMdOrLarger && !hide ? 1 : 0,
     display: isMdOrLarger && !hide ? "flex" : "none",
     config: { tension: 250, friction: 30 },
@@ -104,7 +155,9 @@ export function Dashboard() {
             <div className="zero-size-vertical-scrollbar absolute inset-y-0 left-0 right-0 flex flex-col">
               <div className="px-4 py-1 sticky top-0 z-50 bg-gray-100">
                 <Breadcrumbs
-                  separator={<span className="h-1 w-1 bg-teal-800 rounded-full"></span>}
+                  separator={
+                    <span className="h-1 w-1 bg-teal-800 rounded-full"></span>
+                  }
                   aria-label="breadcrumb"
                 >
                   {breadcrumbs}

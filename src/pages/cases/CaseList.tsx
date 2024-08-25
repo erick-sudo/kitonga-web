@@ -5,39 +5,106 @@ import {
 import useAPI from "../../hooks/useAPI";
 import { APIS } from "../../lib/apis";
 import { axiosGet } from "../../lib/axiosLib";
-import { Case } from "../../lib/definitions";
+import { Case, Population } from "../../lib/definitions";
 import { TANSTACK_QUERY_KEYS } from "../../lib/KEYS";
 import { ControlledAccordions } from "../../ui/accordions/ControlledAccordions";
-import { TanstackSuspense } from "../../ui/TanstackSuspense";
+import {
+  TanstackSuspense,
+  TanstackSuspensePaginated,
+} from "../../ui/TanstackSuspense";
 import { NavLink } from "react-router-dom";
+import { CaseListSkeleton } from "../../ui/Skeletons";
+import { Alert, Pagination } from "@mui/material";
+import InputSelection from "../../ui/InputSelection";
+import { useState } from "react";
+import { MUI_STYLES } from "../../lib/MUI_STYLES";
 
 export function CaseList() {
   const handleRequest = useAPI();
+  const [perPage, setPerPage] = useState<string | number>(10);
 
   return (
-    <div>
-      <TanstackSuspense
-        queryKey={[TANSTACK_QUERY_KEYS.CASE_LIST]}
-        queryFn={() =>
+    <div className="px-4 pb-4 grid gap-2">
+      <TanstackSuspensePaginated
+        queryKey={[TANSTACK_QUERY_KEYS.CASE_LIST, perPage]}
+        queryFn={(page: number) =>
           handleRequest<Case[]>({
             func: axiosGet,
             args: [
               APIS.pagination.getCases
-                .replace("<:page>", "1")
-                .replace("<:size>", "20"),
+                .replace("<:page>", `${page || 1}`)
+                .replace("<:size>", String(perPage)),
             ],
           })
         }
-        fallback={<div>Loading Cases...</div>}
+        fallback={<CaseListSkeleton size={8} />}
+        RenderPaginationIndicators={({ setNextPage }) => (
+          <TanstackSuspense
+            queryKey={[TANSTACK_QUERY_KEYS.CASE_COUNT]}
+            queryFn={() =>
+              handleRequest<Population>({
+                func: axiosGet,
+                args: [APIS.statistics.casesCount],
+              })
+            }
+            RenderData={({ data }) => {
+              if (data.status === "ok" && data.result) {
+                const { count } = data.result;
+
+                return (
+                  <div className="p-2 shadow rounded bg-white flex items-center gap-4">
+                    <InputSelection
+                      value={perPage}
+                      onChange={(newValue) => setPerPage(newValue)}
+                      label="Cases per page"
+                      name="cases_per_page"
+                      options={[5, 10, 25, 50, 75, 100].map((p) => ({
+                        name: p,
+                        value: p,
+                        level: 0,
+                        type: "item",
+                      }))}
+                      sx={{
+                        ...MUI_STYLES.FilledInputTextField3,
+                        width: "8rem",
+                      }}
+                    />
+
+                    <div className="flex-grow flex">
+                      <Pagination
+                        onChange={(_, page) => {
+                          setNextPage(page);
+                        }}
+                        size="small"
+                        count={Math.ceil(count / Number(perPage))}
+                      />
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="rounded overflow-hidden shadow-sm">
+                  <Alert severity="warning">Could not count cases...</Alert>
+                </div>
+              );
+            }}
+          />
+        )}
         RenderData={({ data }) => {
           if (data.status !== "ok") {
+            return (
+              <div className="rounded overflow-hidden shadow-sm">
+                <Alert severity="warning">Could not fetch cases...</Alert>
+              </div>
+            );
           }
 
           return (
-            <div className="grid gap-2 px-4 pb-4">
+            <div className="grid gap-2">
               {data.result ? (
                 <ControlledAccordions
-                  className="bg-white shadow-sm rounded"
+                  className="shadow rounded bg-gray-50"
                   expandedClassName="bg-teal-900"
                   expand={{
                     ExpandIcon: ({ expanded }) => (
@@ -130,10 +197,16 @@ export function CaseList() {
                           <p className="flex-grow">{record}</p>
                         </div>
                       </div>
-                      <div className="py-1">
+                      <div className="py-1 flex items-center gap-2">
                         <NavLink
                           className="bg-teal-800 hover:bg-teal-700 duration-300 w-max px-4 py-1 text-gray-200 rounded flex items-center gap-2 text-sm"
-                          to={`/dashboard/cases/${id}`}
+                          to={`/dashboard/cases/details/${id}`}
+                        >
+                          <span>See More</span> <ChevronRightIcon height={16} />
+                        </NavLink>
+                        <NavLink
+                          className="bg-teal-800 hover:bg-teal-700 duration-300 w-max px-4 py-1 text-gray-200 rounded flex items-center gap-2 text-sm"
+                          to={`/dashboard/cases/edit/${id}`}
                         >
                           <span>Edit</span> <PencilSquareIcon height={16} />
                         </NavLink>

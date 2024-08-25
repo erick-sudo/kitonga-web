@@ -27,4 +27,52 @@ export interface Case {
   updated_at: string;
 }
 
-export interface Client {}
+export interface Client extends Principal {
+  address: string;
+  contact_number: string;
+}
+
+export interface Population {
+  count: number;
+}
+
+export type PaymentType = "full" | "deposit" | "installment";
+
+export type PaymentMethod = "Cash" | "Mpesa" | "CreditCard" | "DebitCard";
+
+export interface Payment {
+  payment_method: PaymentMethod;
+  amount: number;
+  payment_type: PaymentType;
+}
+
+export interface InitializePaymentInformationDto {
+  payment_type: PaymentType;
+  total_fee: number;
+  payment?: Payment | null;
+}
+
+export interface Installment {
+  id: string;
+  amount: number;
+  payment_method: PaymentMethod;
+  payment_type: PaymentType;
+  payment_information_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentInformation {
+  id: string;
+  case_id: string;
+  payment_type: PaymentType;
+  outstanding: number;
+  paid_amount: number;
+  total_fee: number;
+  cummulative_payments: Installment[] | null;
+  deposit_pay: number;
+  deposit_fees: number;
+  final_fees: number;
+  final_pay: number;
+  deposit: number;
+}
