@@ -9,7 +9,7 @@ import Home from "./pages/Home";
 import { Signin } from "./ui/acc/Signin";
 import { ForgotPassword } from "./ui/acc/ForgotPassword";
 import NotSignedIn from "./ui/NotSignedIn";
-// import "primereact/resources/themes/tailwind-light/theme.css";
+import NotFound from "./ui/NotFound";
 
 function App() {
   return (
@@ -47,6 +47,7 @@ function App() {
         />
         <Route path="/sign-in" element={<Signin />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
   );

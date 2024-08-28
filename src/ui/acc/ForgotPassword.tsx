@@ -14,7 +14,7 @@ import {
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { RequestOTP } from "./RequestOtp";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { ResetPassword } from "./ResetPassword";
 
 function PasswordStepperIconComponent({
@@ -62,9 +62,10 @@ export const PASSWORD_RESET_STEPS = {
 };
 
 export const ForgotPassword = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState(null);
-  const [step, setStep] = useState(1); // PASSWORD_RESET_STEPS.REQUEST_OTP);
+  const [step, setStep] = useState(PASSWORD_RESET_STEPS.REQUEST_OTP);
 
   useEffect(() => {
     const cachedEmail = sessionStorage.getItem("forgot-password-email");
@@ -84,11 +85,10 @@ export const ForgotPassword = () => {
   return (
     <div className="">
       <div className="max-w-sm mx-auto grid gap-4 p-4">
-        <div className="flex justify-center"></div>
+        <h3 className="font-bold text-teal-800">Forgot password</h3>
+
         <div className="">
-          <Typography className="text-teal-800" component="h1" variant="h5">
-            Forgot password
-          </Typography>
+          <img className="w-full" src="/assets/undraw_forgot_password.svg" />
         </div>
 
         <Stepper activeStep={step} orientation="vertical">
@@ -105,6 +105,12 @@ export const ForgotPassword = () => {
               Request One Time Password
             </StepLabel>
             <StepContent>
+              <button
+                onClick={() => navigate(-1)}
+                className="flex items-center text-sm text-teal-800 hover:text-teal-600 duration-300"
+              >
+                <ArrowLongLeftIcon height={32} />
+              </button>
               <RequestOTP
                 state={[email, setEmail]}
                 onSuccess={() => {
