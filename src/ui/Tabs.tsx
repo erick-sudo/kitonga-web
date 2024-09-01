@@ -22,7 +22,7 @@ export default function KTabs({
         ))}
       </TabList>
       {items.map(({ panel }, index) => (
-        <TabPanel key={index} value={`${index}`}>
+        <TabPanel sx={{p: 0, paddingTop: 1}} key={index} value={`${index}`}>
           {panel}
         </TabPanel>
       ))}

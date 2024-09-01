@@ -1,7 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MUI_STYLES } from "../../lib/MUI_STYLES";
-import { Alert, Checkbox, Drawer, IconButton, Radio } from "@mui/material";
-import { Close } from "@mui/icons-material";
+import {
+  Alert,
+  Checkbox,
+  Drawer,
+  IconButton,
+  Pagination,
+  Radio,
+  setRef,
+} from "@mui/material";
+import { Close, Download } from "@mui/icons-material";
 import {
   array2d,
   csvString,
@@ -10,14 +18,23 @@ import {
 } from "../../lib/utils";
 import { LoadingButton } from "@mui/lab";
 import useAPI from "../../hooks/useAPI";
-import { axiosPost } from "../../lib/axiosLib";
+import { axiosGet, axiosPost } from "../../lib/axiosLib";
 import { APIS } from "../../lib/apis";
-import { CheckCircleIcon, FaceSmileIcon } from "@heroicons/react/24/outline";
+import {
+  CheckCircleIcon,
+  Cog8ToothIcon,
+  FaceSmileIcon,
+} from "@heroicons/react/24/outline";
 import { ReactState } from "../../ui/definitions";
 import { filterFields } from "../../lib/data";
 import usePagination from "../../hooks/usePagination";
 import KTabs from "../../ui/Tabs";
 import * as XLSX from "xlsx";
+import InputSelection, { InputOption } from "../../ui/InputSelection";
+import { TANSTACK_QUERY_KEYS } from "../../lib/KEYS";
+import { TanstackSuspense } from "../../ui/TanstackSuspense";
+import { PartialClient, Population } from "../../lib/definitions";
+import { InputField } from "../../ui/modals/EditModal";
 
 export type FilterCriteria = "match" | "strict";
 
@@ -89,16 +106,22 @@ export default function FilterDrawer({
     icon: <FaceSmileIcon height={24} />,
     ext: ".xlsx",
   });
+  const [count, setCount] = useState<Population>({ count: 0 });
+
+  const allResponseColumns = () => [
+    ...responseColumns.case,
+    ...responseColumns.payment_information,
+  ];
 
   const handleExport = () => {
     if (exportFormat.name === "csv") {
-      setDataUrl(handleCsv());
+      setDataUrl(handleCsv(results, allResponseColumns()));
     } else {
-      setDataUrl(handleExcel());
+      setDataUrl(handleExcel(results, allResponseColumns()));
     }
   };
 
-  function handleSubmit() {
+  function handleSubmit(response: "count" | "data") {
     setFiltering(true);
     // const payload: Record<"match_columns" | "response_columns", Record<"case" | "payment_information", > > = {}
     const payload = {
@@ -120,25 +143,40 @@ export default function FilterDrawer({
       },
     };
 
-    handleRequest<Record<string, string | number>[]>({
+    handleRequest<Record<string, string | number>[] | Population>({
       func: axiosPost,
       args: [
         insertQueryParams(APIS.filter.casesFilter, {
           criteria,
           page_number: currentPage,
           page_population: itemsPerPage,
-          response: "data",
+          response,
         }),
         payload,
       ],
     })
       .then((res) => {
         if (res.status === "ok" && res.result) {
-          setResults(res.result);
+          if (response === "data" && Array.isArray(res.result)) {
+            console.log(res.result);
+            setResults(res.result);
+          } else {
+            setCount(res.result as Population);
+          }
         }
       })
       .finally(() => setFiltering(false));
   }
+
+  useEffect(() => {
+    handleSubmit("data");
+  }, [currentPage, itemsPerPage]);
+
+  useEffect(() => {
+    if (results.length) {
+      handleSubmit("count");
+    }
+  }, [results]);
 
   return (
     <>
@@ -147,7 +185,7 @@ export default function FilterDrawer({
       </div>
       <Drawer
         PaperProps={{
-          className: "rounded-r-lg my-4 mb-4 p-4",
+          className: "p-2",
           sx: {
             backgroundColor: "rgb(243 244 246)",
           },
@@ -164,13 +202,7 @@ export default function FilterDrawer({
           </div>
           <div className="grid gap-2">
             <div className="">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSubmit();
-                }}
-                className="grid gap-2"
-              >
+              <div className="grid gap-2">
                 {/* Flexibility */}
                 <div className="bg-gray-50 p-2 rounded shadow">
                   <h3>Flexibility of filter</h3>
@@ -208,6 +240,127 @@ export default function FilterDrawer({
                         label: <h4>Case</h4>,
                         panel: (
                           <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4 vertical-scrollbar p-2 border rounded max-h-48 bg-gray-50/75 shadow">
+                            <TanstackSuspense
+                              fallback={
+                                <div className="flex items-center gap-2 bg-white shadow p-4 rounded">
+                                  <span className=" animate-spin">
+                                    <Cog8ToothIcon height={20} />
+                                  </span>
+                                  <div>Fetching clients...</div>
+                                </div>
+                              }
+                              queryKey={[TANSTACK_QUERY_KEYS.ALL_CLIENTS]}
+                              queryFn={() =>
+                                handleRequest<PartialClient[]>({
+                                  func: axiosGet,
+                                  args: [APIS.clients.getAllClients],
+                                })
+                              }
+                              RenderData={({ data }) => {
+                                if (data.status === "ok" && data.result) {
+                                  const clients = data.result;
+
+                                  const clientInputOptions: InputOption[] =
+                                    clients.map(({ id, name }) => ({
+                                      name,
+                                      level: 0,
+                                      type: "item",
+                                      value: id,
+                                    }));
+
+                                  return (
+                                    <>
+                                      {clients.length > 0 ? (
+                                        <div className="bg-white p-2 rounded shadow flex items-center">
+                                          <h5 className="flex gap-2 items-center">
+                                            <Checkbox
+                                              checked={requestColumns.case.includes(
+                                                "client_id"
+                                              )}
+                                              onChange={(_, checked) => {
+                                                if (
+                                                  checked &&
+                                                  !requestColumns.case.includes(
+                                                    "client_id"
+                                                  )
+                                                ) {
+                                                  setRequestColumns((p) => ({
+                                                    ...p,
+                                                    case: [
+                                                      ...p.case,
+                                                      "client_id",
+                                                    ],
+                                                  }));
+                                                } else {
+                                                  setRequestColumns((p) => ({
+                                                    ...p,
+                                                    case: p.case.filter(
+                                                      (k) => k !== "client_id"
+                                                    ),
+                                                  }));
+                                                  delete requestPayload.case[
+                                                    "client_id"
+                                                  ];
+                                                }
+                                              }}
+                                              size="small"
+                                              sx={MUI_STYLES.CheckBox}
+                                            />
+                                            {/* <span>Client</span> */}
+                                          </h5>
+                                          <InputField
+                                            enabled={requestColumns.case.includes(
+                                              "client_id"
+                                            )}
+                                            name="client_id"
+                                            label="Select Client"
+                                            onChange={(newValue) => {
+                                              setRequestPayload((p) => ({
+                                                ...p,
+                                                case: {
+                                                  ...p.case,
+                                                  client_id: newValue,
+                                                },
+                                              }));
+                                            }}
+                                            value={
+                                              requestPayload.case[
+                                                "client_id"
+                                              ] || ""
+                                            }
+                                            options={{
+                                              type: "select",
+                                              options: [
+                                                {
+                                                  name: "None",
+                                                  level: 0,
+                                                  type: "item",
+                                                  value: "",
+                                                },
+                                                ...clientInputOptions,
+                                              ],
+                                            }}
+                                            required={true}
+                                          />
+                                        </div>
+                                      ) : (
+                                        <div className="flex items-center justify-between gap-2 bg-teal-50 shadow p-4 rounded">
+                                          No clients found...
+                                        </div>
+                                      )}
+                                    </>
+                                  );
+                                }
+                                return (
+                                  <div>
+                                    <Alert severity="error">
+                                      Sorry, an error occured while fetching
+                                      clients
+                                    </Alert>
+                                  </div>
+                                );
+                              }}
+                            />
                             {filterFields.matchColumns.case.map((f, index) => (
                               <div
                                 key={index}
@@ -485,6 +638,7 @@ export default function FilterDrawer({
 
                 <div className="flex gap-2 flex-wrap">
                   <LoadingButton
+                    onClick={() => handleSubmit("data")}
                     disabled={
                       (requestColumns.case.length < 1 &&
                         requestColumns.payment_information.length < 1) ||
@@ -509,49 +663,127 @@ export default function FilterDrawer({
                       <span>Apply Filters</span>
                     </span>
                   </LoadingButton>
+
+                  {results.length > 0 && (
+                    <>
+                      <div className="flex rounded-lg overflow-hidden">
+                        {exportFormats.map((format, index) => (
+                          <button
+                            onClick={() => {
+                              setExportFormat(format);
+                            }}
+                            className={`flex items-center gap-2 px-4 duration-300 ${
+                              exportFormat.ext === format.ext
+                                ? "bg-teal-800 text-white hover:bg-teal-600"
+                                : "bg-gray-300 text-gray-300"
+                            }`}
+                            key={index}
+                          >
+                            {format.icon}
+                            {format.name}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => handleExport()}
+                        className="bg-teal-900 px-4 w-36 py-2 text-white hover:bg-teal-700 duration-300 rounded-lg"
+                      >
+                        Export {exportFormat.name}
+                      </button>
+                    </>
+                  )}
+
+                  {results.length > 0 && dataUrl && (
+                    <a
+                      href={dataUrl}
+                      download={`FILTER_RESULTS_${new Date()
+                        .toDateString()
+                        .replace(/\s+/g, "_")}${exportFormat.ext}`}
+                      className="flex bg-teal-900 px-4 py-2 text-white hover:bg-teal-700 duration-300 rounded-lg"
+                    >
+                      <Download />
+                      <span>Download</span>
+                      <span className="uppercase">{exportFormat.name}</span>
+                    </a>
+                  )}
                 </div>
-              </form>
+              </div>
             </div>
 
             {/* Results */}
-            <div className="bg-white border shadow rounded p-2">
+            <div className="bg-white border shadow rounded p-2 grid">
               <h3 className="px-2 font-bold">Results</h3>
               <div className="horizontal-scrollbar pb-2">
-                <table className="w-full">
-                  <thead>
-                    <tr>
-                      {[
-                        ...responseColumns.case,
-                        ...responseColumns.payment_information,
-                      ].map((column, index) => (
-                        <th
-                          key={`th#${index}`}
-                          className="text-start px-2 text-teal-800 py-1 truncate"
-                        >
-                          {snakeCaseToTitleCase(column)}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {results?.map((record, index) => (
-                      <tr key={index} className="border-t">
-                        {[
-                          ...responseColumns.case,
-                          ...responseColumns.payment_information,
-                        ].map((column, index) => (
-                          <td
-                            key={`td#${index}`}
-                            className="px-2 py-1 truncate"
+                {results.length > 0 ? (
+                  <table className="w-full">
+                    <thead>
+                      <tr>
+                        {allResponseColumns().map((column, index) => (
+                          <th
+                            key={`th#${index}`}
+                            className="text-start px-2 text-teal-800 py-1 truncate"
                           >
-                            {record[column]}
-                          </td>
+                            {snakeCaseToTitleCase(column)}
+                          </th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {results?.map((record, index) => (
+                        <tr key={index} className="border-t">
+                          {[
+                            ...responseColumns.case,
+                            ...responseColumns.payment_information,
+                          ].map((column, index) => (
+                            <td
+                              key={`td#${index}`}
+                              className="px-2 py-1 truncate"
+                            >
+                              {record[column]}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="p-2">No results...</div>
+                )}
               </div>
+
+              {!!count?.count && (
+                <div className="p-2 flex items-center gap-4">
+                  <InputSelection
+                    value={itemsPerPage}
+                    onChange={(newValue) =>
+                      setNumberOfItemsPerPage(Number(newValue))
+                    }
+                    label="Results per page"
+                    name="results_per_page"
+                    options={[5, 10, 25, 50, 75, 100].map((p) => ({
+                      name: p,
+                      value: p,
+                      level: 0,
+                      type: "item",
+                    }))}
+                    sx={{
+                      ...MUI_STYLES.FilledInputTextField3,
+                      width: "8rem",
+                    }}
+                  />
+
+                  <div className="flex-grow flex">
+                    <Pagination
+                      page={currentPage}
+                      onChange={(_, page) => {
+                        setNextPage(page);
+                      }}
+                      size="small"
+                      count={Math.ceil(count.count / Number(itemsPerPage))}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

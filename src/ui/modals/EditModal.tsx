@@ -35,11 +35,13 @@ export interface EditableFieldOptions {
 }
 
 export interface ControlledMuiFieldOptions extends EditableFieldOptions {
+  enabled?: boolean;
   value: string | number;
   onChange: (newValue: string) => void;
 }
 
 export function InputField({
+  enabled = true,
   name,
   options,
   label,
@@ -50,6 +52,7 @@ export function InputField({
 }: ControlledMuiFieldOptions) {
   return options.type === "select" ? (
     <InputSelection
+      enabled={enabled}
       required={required}
       name={name}
       label={label}

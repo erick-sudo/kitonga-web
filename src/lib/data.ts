@@ -41,7 +41,6 @@ export const filterFields = {
       "file_reference",
       "clients_reference",
       "status",
-      "client_id",
       "created_at",
       "updated_at",
     ],
