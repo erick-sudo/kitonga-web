@@ -10,28 +10,24 @@ export const APIS = {
   statistics: {
     casesCount: `${baseUrl}/stats/cases/count`,
     clientsCount: `${baseUrl}/stats/clients/count`,
-    searchCasesCount: `${baseUrl}/stats/search/cases/count/<:q>/<:v>/`,
-    searchClientsCount: `${baseUrl}/stats/search/clients/count/<:q>/<:v>/`,
+    searchCasesCount: `${baseUrl}/stats/search/cases/count`,
+    searchClientsCount: `${baseUrl}/stats/search/clients/count`,
     showClientCaseStatusTally: `${baseUrl}/stats/clients/<:clientId>/cases/status/tally`,
   },
   pagination: {
-    getCases: `${baseUrl}/pages/cases/<:page>/<:size>`,
+    getCases: `${baseUrl}/pages/cases`,
     getClients: `${baseUrl}/pages/clients/`,
     filter: {
       filterCases: `${baseUrl}/filter/cases/<:q>/<:v>`,
     },
     search: {
-      searchCases: `${baseUrl}/search/cases/<:q>/<:v>/`,
-      searchClients: `${baseUrl}/search/clients/<:q>/<:v>/`,
+      searchCases: `${baseUrl}/search/cases`,
+      searchClients: `${baseUrl}/search/clients`,
     },
   },
   filter: {
-    filterCases: `${baseUrl}/filter/cases/<:criteria>`,
-    filterClientCases: `${baseUrl}/filter_pages/cases/<:criteria>/<:response>`,
-    filterClients: `${baseUrl}/filter/clients/<:criteria>`,
-    caseRangeFilter: `${baseUrl}/filter/range/cases/<:response>`,
-    perClientCaseRangeFilterData: `${baseUrl}/filter/range/cases/<:clientId>/<:response>/`,
-    perClientCaseRangeFilterCount: `${baseUrl}/filter/range/cases/<:clientId>/<:response>`,
+    casesFilter: `${baseUrl}/filter/cases`,
+    caseRangeFilter: `${baseUrl}/filter/range/cases`,
   },
   users: {
     getBriefUsers: `${baseUrl}/users/brief`,

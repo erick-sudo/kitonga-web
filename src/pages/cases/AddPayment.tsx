@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Payment, PaymentMethod, PaymentType } from "../../lib/definitions";
 import { ReactState } from "../../ui/definitions";
 import { ManualModal } from "../../ui/modals/ManualModal";
@@ -6,8 +6,11 @@ import { Button, TextField } from "@mui/material";
 import { MUI_STYLES } from "../../lib/MUI_STYLES";
 import InputSelection from "../../ui/InputSelection";
 import { capitalize } from "../../lib/utils";
+import { paymentMethods } from "../../lib/data";
 
 export function AddPayment({
+  submitText = "Set",
+  title,
   anchorContent,
   anchorClassName,
   updatePayment,
@@ -17,6 +20,8 @@ export function AddPayment({
     payment_type: "installment",
   }),
 }: {
+  submitText?: React.ReactNode;
+  title?: React.ReactNode;
   anchorContent: any;
   anchorClassName: string;
   updatePayment: (p: Payment) => void;
@@ -31,7 +36,7 @@ export function AddPayment({
       state={[openModal, setOpenModal]}
     >
       <div className="grid gap-4 py-4 min-w-[18rem]">
-        <h3>Set Payment</h3>
+        {title}
 
         <InputSelection
           label="Payment Method"
@@ -43,7 +48,7 @@ export function AddPayment({
               payment_method: newMethod as PaymentMethod,
             });
           }}
-          options={["Cash", "Mpesa", "CreditCard", "DebitCard"].map((t) => ({
+          options={paymentMethods.map((t) => ({
             name: t,
             value: t,
             level: 0,
@@ -118,7 +123,7 @@ export function AddPayment({
               borderBottomRightRadius: "8px",
             }}
           >
-            Set
+            {submitText}
           </Button>
         </div>
       </div>

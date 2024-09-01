@@ -26,3 +26,8 @@ export const validateEmail = async (email: string) => {
     .then(() => null)
     .catch((err) => err.errors);
 };
+
+export interface DeleteResponse {
+  status: "success" | "error";
+  message: string;
+}

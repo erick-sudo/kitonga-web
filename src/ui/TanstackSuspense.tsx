@@ -1,10 +1,9 @@
 import * as React from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ReactState, ReactStateSetter } from "./definitions";
 
 interface CommonSuspenseProps<T> {
   keepPrevious?: boolean;
-  queryKey: (string | number)[];
+  queryKey: any[];
   fallback?: React.ReactNode;
   RenderError?: React.FC<{ error: Error }>;
   RenderData: React.FC<{ data: T }>;
@@ -16,12 +15,11 @@ interface TanstackSuspenseFNProps<T> extends CommonSuspenseProps<T> {
 }
 
 interface TanstackSuspensePaginatedFNProps<T> extends CommonSuspenseProps<T> {
-  queryFn: (page: number) => Promise<T>;
+  queryFn: () => Promise<T>;
   RenderPaginationIndicators: React.FC<{
     currentPage: number;
-    setNextPage: ReactStateSetter<number>;
   }>;
-  state?: ReactState<number>;
+  currentPage: number;
 }
 
 export function TanstackSuspense<T>({
@@ -32,7 +30,7 @@ export function TanstackSuspense<T>({
   RenderError,
   RenderData,
   defaultErrorClassName,
-}: TanstackSuspenseFNProps<T> ) {
+}: TanstackSuspenseFNProps<T>) {
   const { data, isPending, error, isError } = useQuery({
     queryKey,
     queryFn,
@@ -56,7 +54,7 @@ export function TanstackSuspense<T>({
 }
 
 export function TanstackSuspensePaginated<T>({
-  state: [page, setPage] = React.useState(0),
+  currentPage,
   queryKey,
   queryFn,
   fallback,
@@ -68,15 +66,15 @@ export function TanstackSuspensePaginated<T>({
   return (
     <>
       <TanstackSuspense
-        queryKey={[queryKey, page].flat()}
-        queryFn={async () => queryFn(page)}
+        queryKey={[queryKey, currentPage].flat()}
+        queryFn={queryFn}
         fallback={fallback}
         RenderError={RenderError}
         RenderData={RenderData}
         keepPrevious={true}
         defaultErrorClassName={defaultErrorClassName}
       />
-      <RenderPaginationIndicators currentPage={page} setNextPage={setPage} />
+      <RenderPaginationIndicators currentPage={currentPage} />
     </>
   );
 }

@@ -14,10 +14,6 @@
   @apply bg-gray-200 shimmer before:via-gray-500/50 before:animate-[shimmer_1s_infinite];
 }
 
-.shimmer-stone-500 {
-  @apply bg-stone-500 shimmer before:via-stone-500/50 before:animate-[shimmer_1s_infinite];
-}
-
 .vertical-scrollbar,
 .dash-vertical-scrollbar,
 .zero-size-vertical-scrollbar {
@@ -41,133 +37,20 @@
 .vertical-scrollbar::-webkit-scrollbar,
 .dash-vertical-scrollbar::-webkit-scrollbar {
   width: 5px;
-  background-color: rgb(5 46 22 / 0.3);
+  background-color: rgb(19 78 74 / 0.3);
   border-radius: 20px;
 }
 
 .horizontal-scrollbar::-webkit-scrollbar,
 .dash-horizontal-scrollbar::-webkit-scrollbar {
   height: 5px;
-  background-color: rgb(5 46 22 / 0.3);
+  background-color: rgb(19 78 74 / 0.3);
   border-radius: 20px;
 }
 
 .horizontal-scrollbar::-webkit-scrollbar-thumb,
 .vertical-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgb(5 46 22);
-  border-radius: 20px;
-}
-.dash-horizontal-scrollbar::-webkit-scrollbar-thumb,
-.dash-vertical-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgb(107, 33, 168);
-  border-radius: 20px;
-}
-
-.custom-otp-input-sample {
-  width: 48px;
-  height: 48px;
-  font-size: 24px;
-  appearance: none;
-  text-align: center;
-  transition: all 0.2s;
-  border-radius: 0;
-  border: 1px solid var(--surface-400);
-  background: transparent;
-  outline-offset: -2px;
-  outline-color: transparent;
-  border-right: 0 none;
-  transition: outline-color 0.3s;
-  color: var(--text-color);
-}
-* {
-  box-sizing: border-box;
-}
-
-.vertical-scrollbar,
-.dash-vertical-scrollbar,
-.zero-size-vertical-scrollbar {
-  overflow-y: scroll;
-}
-
-.horizontal-scrollbar,
-.dash-horizontal-scrollbar,
-.zero-size-horizontal-scrollbar {
-  overflow-x: scroll;
-}
-
-.zero-size-vertical-scrollbar::-webkit-scrollbar {
-  width: 0px;
-}
-
-.zero-size-horizontal-scrollbar::-webkit-scrollbar {
-  height: 0px;
-}
-
-.vertical-scrollbar::-webkit-scrollbar,
-.dash-vertical-scrollbar::-webkit-scrollbar {
-  width: 5px;
-  background-color: rgb(5 46 22 / 0.3);
-  border-radius: 20px;
-}
-
-.horizontal-scrollbar::-webkit-scrollbar,
-.dash-horizontal-scrollbar::-webkit-scrollbar {
-  height: 5px;
-  background-color: rgb(5 46 22 / 0.3);
-  border-radius: 20px;
-}
-
-.horizontal-scrollbar::-webkit-scrollbar-thumb,
-.vertical-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgb(5 46 22);
-  border-radius: 20px;
-}
-.dash-horizontal-scrollbar::-webkit-scrollbar-thumb,
-.dash-vertical-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgb(107, 33, 168);
-  border-radius: 20px;
-}
-* {
-  box-sizing: border-box;
-}
-
-.vertical-scrollbar,
-.dash-vertical-scrollbar,
-.zero-size-vertical-scrollbar {
-  overflow-y: scroll;
-}
-
-.horizontal-scrollbar,
-.dash-horizontal-scrollbar,
-.zero-size-horizontal-scrollbar {
-  overflow-x: scroll;
-}
-
-.zero-size-vertical-scrollbar::-webkit-scrollbar {
-  width: 0px;
-}
-
-.zero-size-horizontal-scrollbar::-webkit-scrollbar {
-  height: 0px;
-}
-
-.vertical-scrollbar::-webkit-scrollbar,
-.dash-vertical-scrollbar::-webkit-scrollbar {
-  width: 5px;
-  background-color: rgb(5 46 22 / 0.3);
-  border-radius: 20px;
-}
-
-.horizontal-scrollbar::-webkit-scrollbar,
-.dash-horizontal-scrollbar::-webkit-scrollbar {
-  height: 5px;
-  background-color: rgb(5 46 22 / 0.3);
-  border-radius: 20px;
-}
-
-.horizontal-scrollbar::-webkit-scrollbar-thumb,
-.vertical-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgb(5 46 22);
+  background-color: rgb(19 78 74);
   border-radius: 20px;
 }
 .dash-horizontal-scrollbar::-webkit-scrollbar-thumb,
@@ -197,4 +80,20 @@
   border-right-width: 1px;
   border-right-style: solid;
   border-color: var(--surface-400);
+}
+
+.spin {
+  animation: 0.8s anim_spin linear infinite;
+}
+
+@keyframes anim_spin {
+  0% {
+    rotate: 0deg;
+  }
+  50% {
+    rotate: 180deg;
+  }
+  0% {
+    rotate: 360deg;
+  }
 }

@@ -206,6 +206,7 @@ export function InitializePaymentInformation({
         )}
         <div className="">
           <LoadingButton
+            disabled={!!!paymentInformation.total_fee}
             loading={loading}
             sx={{
               ...MUI_STYLES.Button,

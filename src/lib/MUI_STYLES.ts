@@ -3,9 +3,30 @@ export const KitongaColorScheme = {
   teal900: "rgb(19, 78, 74)",
   teal800: "rgb(17, 94, 89)",
   teal700: "rgb(15, 118, 110)",
+  teal600: "rgb(13, 148, 136)",
 };
 
 export const MUI_STYLES = {
+  TabList: {
+    "& .MuiTabs-indicator": {
+      backgroundColor: KitongaColorScheme.teal800,
+    },
+    "& .MuiButtonBase-root.MuiTab-root": {
+      color: "black",
+      transition: "color 0.2s ease-in-out",
+      "&:hover": {
+        color: KitongaColorScheme.teal600,
+      },
+      "&.Mui-selected": {
+        color: KitongaColorScheme.teal800,
+      },
+    },
+  },
+  Tab: {
+    "&.Mui-selected": {
+      color: KitongaColorScheme.teal900,
+    },
+  },
   OneTimePasswordInput: {
     "& .MuiOtpInput-TextField": {
       "& label.Mui-focused": {
@@ -95,14 +116,14 @@ export const MUI_STYLES = {
       border: "none",
     },
   },
-FilledInputTextField3: {
+  FilledInputTextField3: {
     "& .MuiFilledInput-root": {
       backgroundColor: "rgba(0, 0, 0, 0)",
       border: "solid 1px rgba(0, 0, 0, .1)",
       borderTopLeftRadius: "8px",
       borderTopRightRadius: "8px",
       borderBottomLeftRadius: "8px",
-      borderBottomRightRadius: "8px"
+      borderBottomRightRadius: "8px",
     },
     "& label.Mui-focused": {
       color: "black",
@@ -146,6 +167,19 @@ FilledInputTextField3: {
     "&:hover": {
       backgroundColor: KitongaColorScheme.teal700,
     },
+  },
+  Button2: {
+    textTransform: "none",
+    margin: "0 0",
+    color: "white",
+    backgroundColor: KitongaColorScheme.teal800,
+    "&:hover": {
+      backgroundColor: KitongaColorScheme.teal700,
+    },
+    borderBottomLeftRadius: "8px",
+    borderBottomRightRadius: "8px",
+    borderTopLeftRadius: "8px",
+    borderTopRightRadius: "8px",
   },
   DeleteButton: {
     textTransform: "none",

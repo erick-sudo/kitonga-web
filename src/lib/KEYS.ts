@@ -8,4 +8,5 @@ export const TANSTACK_QUERY_KEYS = {
   CASE_DETAILS: "case-details",
   CLIENT_DETAILS: "client-details",
   PAYMENT_INFORMATION_DETAILS: "payment-information-details",
+  ALL_CLIENTS: "all-clients"
 };

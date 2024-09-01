@@ -32,6 +32,11 @@ export interface Client extends Principal {
   contact_number: string;
 }
 
+export interface PartialClient {
+  id: string;
+  name: string;
+}
+
 export interface Population {
   count: number;
 }

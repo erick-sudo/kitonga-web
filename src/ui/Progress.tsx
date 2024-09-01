@@ -65,53 +65,31 @@ export function Progress({
   };
 
   useEffect(() => {
-    let start = 0;
+    let start = percentage;
     createCanvas();
     textDiv.current!.style.fontSize = `${
       (canvasWrapper.current!.offsetWidth / 85) * 100
     }%`;
 
-    // circleProgress({
-    //   ctx: canvasRef.current!.getContext("2d"),
-    //   start: 100,
-    //   strokeColor: incompleteColor,
-    //   radius: canvasRef.current!.width / 2,
-    // });
+    setCount(Math.round(start));
 
-    const interval = setInterval(() => {
-      if (start > percentage) {
-        clear();
-        return;
-      }
+    canvasRef.current
+      ?.getContext("2d")
+      ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
-      setCount(Math.round(start));
+    circleProgress({
+      ctx: canvasRef.current!.getContext("2d"),
+      start: 100,
+      strokeColor: incompleteColor,
+      radius: Math.min(canvasRef.current!.width, canvasRef.current!.height) / 2,
+    });
 
-      canvasRef.current
-        ?.getContext("2d")
-        ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-
-      circleProgress({
-        ctx: canvasRef.current!.getContext("2d"),
-        start: 100,
-        strokeColor: incompleteColor,
-        radius: Math.min(canvasRef.current!.width, canvasRef.current!.height) / 2,
-      });
-
-      circleProgress({
-        ctx: canvasRef.current!.getContext("2d"),
-        start: start,
-        strokeColor: completeColor,
-        radius: Math.min(canvasRef.current!.width, canvasRef.current!.height) / 2,
-      });
-
-      start += 0.1;
-    }, 1);
-
-    const clear = () => {
-      clearInterval(interval);
-    };
-
-    return clear;
+    circleProgress({
+      ctx: canvasRef.current!.getContext("2d"),
+      start: start,
+      strokeColor: completeColor,
+      radius: Math.min(canvasRef.current!.width, canvasRef.current!.height) / 2,
+    });
   }, [percentage, width, completeColor, incompleteColor, canvasRefresher]);
 
   return (

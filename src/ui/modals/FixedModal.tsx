@@ -4,15 +4,17 @@ import { Modal } from "@mui/material";
 import { ReactState } from "../definitions";
 
 export interface ModalProps {
-  className?: string;
+  containerClassName?: string;
+  contentClassName?: string;
+  viewPortClassName?: string;
   anchorClassName?: string;
-  anchorContent?: React.ReactNode,
-  children: React.ReactNode,
-  state?: ReactState<boolean>
+  anchorContent?: React.ReactNode;
+  children: React.ReactNode;
+  state?: ReactState<boolean>;
 }
 
 export const FixedModal: React.FC<ModalProps> = ({
-  className,
+  containerClassName,
   anchorClassName,
   anchorContent,
   children,
@@ -26,22 +28,26 @@ export const FixedModal: React.FC<ModalProps> = ({
       <div className={anchorClassName} onClick={handleOpen}>
         {anchorContent}
       </div>
-      <Modal
-        sx={{
-          "& .MuiBackdrop-root": {
-            backgroundColor: "rgba(0, 0, 0, 0.2)",
-            // backdropFilter: "blur(2px)",
-          },
-        }}
-        aria-labelledby="spring-modal-title"
-        aria-describedby="spring-modal-description"
-        open={open}
-        onClose={handleClose}
-        closeAfterTransition
-        slots={{ backdrop: Backdrop }}
-      >
-        <div className={`${className}`}>{children}</div>
-      </Modal>
+      {open && (
+        <Modal
+          sx={{
+            "& .MuiBackdrop-root": {
+              backgroundColor: "rgba(0, 0, 0, 0.2)",
+              // backdropFilter: "blur(2px)",
+            },
+          }}
+          aria-labelledby="spring-modal-title"
+          aria-describedby="spring-modal-description"
+          open={open}
+          onClose={handleClose}
+          closeAfterTransition
+          slots={{ backdrop: Backdrop }}
+        >
+          <div style={{ zIndex: 99 }} className={`${containerClassName} fixed inset-0`}>
+            {children}
+          </div>
+        </Modal>
+      )}
     </>
   );
-}
+};

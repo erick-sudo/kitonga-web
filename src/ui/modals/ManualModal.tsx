@@ -3,6 +3,9 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import { FixedModal, ModalProps } from "./FixedModal";
 
 export const ManualModal: React.FC<ModalProps> = ({
+  containerClassName,
+  contentClassName = "w-max mx-auto",
+  viewPortClassName = "bg-white",
   anchorClassName,
   anchorContent,
   children,
@@ -11,25 +14,25 @@ export const ManualModal: React.FC<ModalProps> = ({
   return (
     <>
       <FixedModal
+        containerClassName={`${containerClassName} vertical-scrollbar`}
         state={[open, setOpen]}
-        className=""
         anchorClassName={anchorClassName}
         anchorContent={anchorContent}
       >
-        <div className="fixed inset-0 vertical-scrollbar" style={{ zIndex: 70 }}>
-          <div className="w-max mx-auto p-4 grid gap-4">
-            <div className="flex justify-end">
-              <button
-                onClick={() => setOpen(false)}
-                className="rounded-full border p-1 shadow-sm shadow-black hover:shadow-md hover:shadow-black hover:scale-105 duration-300 bg-white"
-              >
-                <XMarkIcon height={20} />
-              </button>
-            </div>
-            <div className="bg-white shadow p-4 rounded-md">{children}</div>
+        <div className={`grid gap-2 p-2 ${contentClassName}`}>
+          <div className="flex justify-end">
+            <button
+              onClick={() => setOpen(false)}
+              className="rounded-full border p-1 shadow-sm shadow-black hover:shadow-md hover:shadow-black hover:scale-105 duration-300 bg-white"
+            >
+              <XMarkIcon height={20} />
+            </button>
+          </div>
+          <div className={`shadow p-4 rounded-md ${viewPortClassName}`}>
+            {children}
           </div>
         </div>
       </FixedModal>
     </>
   );
-}
+};
