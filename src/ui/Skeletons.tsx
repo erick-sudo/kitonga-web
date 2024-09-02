@@ -141,3 +141,26 @@ export function PaymentListSkeleton({ size = 6 }: { size?: number }) {
     </div>
   );
 }
+
+export const ClientListItemSkeleton = () => {
+  return (
+    <div className="flex justify-between p-4 bg-white shadow-sm rounded-sm">
+      <div className="p-2 w-3/5 shimmer-gray-200 rounded"></div>
+
+      <div className="flex w-1/5 gap-2">
+        <div className="p-2 flex-grow shimmer-gray-200 rounded"></div>
+        <div className="p-2 shimmer-gray-200 rounded"></div>
+      </div>
+    </div>
+  );
+};
+
+export const ClientListSkeleton = ({ size = 6 }: { size?: number }) => {
+  return (
+    <div className="grid gap-2">
+      {new Array(size || 6).fill(0).map((_, idx) => (
+        <CaseListItemSkeleton key={idx} />
+      ))}
+    </div>
+  );
+};

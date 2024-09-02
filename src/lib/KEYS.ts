@@ -10,4 +10,5 @@ export const TANSTACK_QUERY_KEYS = {
   PAYMENT_INFORMATION_DETAILS: "payment-information-details",
   ALL_CLIENTS: "all-clients",
   FILTER_RESULTS: "filter-results",
+  CLIENT_LIST: "client-list",
 };

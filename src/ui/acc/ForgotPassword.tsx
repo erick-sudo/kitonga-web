@@ -83,7 +83,7 @@ export const ForgotPassword = () => {
   }, [email]);
 
   return (
-    <div className="">
+    <div className="min-h-screen p-4 flex items-center justify-center">
       <div className="max-w-sm mx-auto grid gap-4 p-4">
         <h3 className="font-bold text-teal-800">Forgot password</h3>
 

@@ -247,16 +247,20 @@ function ClientDetails({ client_id }: { client_id: string }) {
       }
       RenderData={({ data }) => {
         if (data.status === "ok" && data.result) {
-          const { name, email, address, contact_number } = data.result;
+          const { name, email, address, contact_number, username } = data.result;
 
           return (
             <div>
-              <div className="bg-white border-l-8 border-teal-800 shadow rounded">
+              <div className="bg-white border-l-8 border-teal-800 shadow rounded-r">
                 <div className="">
                   <div className="grid grid-cols-">
                     <div className="flex items-start border-b py-1">
                       <h4 className="px-2 min-w-44 max-w-44">Name</h4>
                       <p className="flex-grow">{name}</p>
+                    </div>
+                    <div className="flex items-start border-b py-1">
+                      <h4 className="px-2 min-w-44 max-w-44">Username</h4>
+                      <p className="flex-grow">{username}</p>
                     </div>
                     <div className="flex items-start border-b py-1">
                       <h4 className="px-2 min-w-44 max-w-44">Email</h4>

@@ -2,8 +2,8 @@ import { NavLink } from "react-router-dom";
 
 export default function NotSignedIn() {
   return (
-    <div className="min-h-screen p-4">
-      <div className="max-w-xs flex flex-col gap-4 mx-auto">
+    <div className="min-h-screen p-4 flex items-center justify-center">
+      <div className="max-w-xs flex-grow flex flex-col gap-4 mx-auto">
         <div className="">
           <img className="w-full" src="/assets/undraw_fingerprint_login.svg" />
         </div>

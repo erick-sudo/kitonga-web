@@ -8,6 +8,7 @@ import {
   Pagination,
   Radio,
   setRef,
+  Switch,
 } from "@mui/material";
 import { Close, Download } from "@mui/icons-material";
 import {
@@ -47,6 +48,27 @@ const exportFormats = [
   },
 ];
 
+const dateFields = ["created_at", "updated_at"];
+
+const fillRanges = (p: Record<string, (string | number)[]>) =>
+  Object.entries(p).reduce(
+    (acc: Record<string, (string | number)[]>, [k, v]) => {
+      if (v.length > 0) {
+        const ranges = [];
+        if (dateFields.includes(k)) {
+          ranges.push(v[0] || new Date(1).toLocaleDateString());
+          ranges.push(v[1] || new Date(1).toLocaleDateString());
+        } else {
+          ranges.push(Number(v[0]) || 0);
+          ranges.push(Number(v[1]) || 0);
+        }
+        acc[k] = ranges;
+      }
+      return acc;
+    },
+    {}
+  );
+
 const handleCsv = (
   data: Record<string, string | number>[],
   columns: string[]
@@ -83,6 +105,7 @@ export default function FilterDrawer({
   children?: React.ReactNode;
   state?: ReactState<boolean>;
 }) {
+  const [filterType, setFilterType] = useState<"single" | "range">("single");
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
   const [results, setResults] = useState<Record<string, string | number>[]>([]);
@@ -97,6 +120,9 @@ export default function FilterDrawer({
   const [requestPayload, setRequestPayload] = useState<
     Record<"case" | "payment_information", Record<string, string>>
   >({ case: {}, payment_information: {} });
+  const [rangePayload, setRangePayload] = useState<
+    Record<"case" | "payment_information", Record<string, (string | number)[]>>
+  >({ case: {}, payment_information: {} });
   const handleRequest = useAPI();
   const { currentPage, setNextPage, setNumberOfItemsPerPage, itemsPerPage } =
     usePagination();
@@ -108,10 +134,14 @@ export default function FilterDrawer({
   });
   const [count, setCount] = useState<Population>({ count: 0 });
 
-  const allResponseColumns = () => [
-    ...responseColumns.case,
-    ...responseColumns.payment_information,
-  ];
+  const noResponseColumns = () =>
+    responseColumns.case.length < 1 &&
+    responseColumns.payment_information.length < 1;
+
+  const allResponseColumns = () =>
+    filterType === "range" && noResponseColumns()
+      ? filterFields.matchColumns.case
+      : [...responseColumns.case, ...responseColumns.payment_information];
 
   const handleExport = () => {
     if (exportFormat.name === "csv") {
@@ -121,18 +151,53 @@ export default function FilterDrawer({
     }
   };
 
-  function handleSubmit(response: "count" | "data") {
+  const sanitizedRanges = () => ({
+    case: fillRanges(rangePayload.case),
+    payment_information: fillRanges(rangePayload.payment_information),
+  });
+
+  const emptyRequestPayloadFields = () =>
+    requestColumns.case.some((col) => !!!requestPayload.case[col]) ||
+    requestColumns.payment_information.some(
+      (col) => !!!requestPayload.payment_information[col]
+    );
+
+  const canApply = () => {
+    if (filterType === "range") {
+      return !(
+        requestColumns.case.length < 1 &&
+        requestColumns.payment_information.length < 1
+      );
+    }
+
+    return !(
+      (requestColumns.case.length < 1 &&
+        requestColumns.payment_information.length < 1) ||
+      (responseColumns.case.length < 1 &&
+        responseColumns.payment_information.length < 1) ||
+      emptyRequestPayloadFields()
+    );
+  };
+
+  const handleSubmit = (response: "count" | "data") => {
     setFiltering(true);
-    // const payload: Record<"match_columns" | "response_columns", Record<"case" | "payment_information", > > = {}
     const payload = {
-      match_columns: {
-        ...(Object.entries(requestPayload.case).length > 0
-          ? { case: requestPayload.case }
-          : {}),
-        ...(Object.entries(requestPayload.payment_information).length > 0
-          ? { payment_information: requestPayload.payment_information }
-          : {}),
-      },
+      ...(filterType === "single"
+        ? {
+            match_columns: {
+              ...(Object.entries(requestPayload.case).length > 0
+                ? { case: requestPayload.case }
+                : {}),
+              ...(Object.entries(requestPayload.payment_information).length > 0
+                ? { payment_information: requestPayload.payment_information }
+                : {}),
+            },
+          }
+        : {
+            per_column_range_filter_params: {
+              parameter: sanitizedRanges(),
+            },
+          }),
       response_columns: {
         ...(responseColumns.case.length > 0
           ? { case: responseColumns.case }
@@ -146,19 +211,23 @@ export default function FilterDrawer({
     handleRequest<Record<string, string | number>[] | Population>({
       func: axiosPost,
       args: [
-        insertQueryParams(APIS.filter.casesFilter, {
-          criteria,
-          page_number: currentPage,
-          page_population: itemsPerPage,
-          response,
-        }),
+        insertQueryParams(
+          filterType === "single"
+            ? APIS.filter.casesFilter
+            : APIS.filter.caseRangeFilter,
+          {
+            criteria,
+            page_number: currentPage,
+            page_population: itemsPerPage,
+            response,
+          }
+        ),
         payload,
       ],
     })
       .then((res) => {
         if (res.status === "ok" && res.result) {
           if (response === "data" && Array.isArray(res.result)) {
-            console.log(res.result);
             setResults(res.result);
           } else {
             setCount(res.result as Population);
@@ -166,14 +235,16 @@ export default function FilterDrawer({
         }
       })
       .finally(() => setFiltering(false));
-  }
+  };
 
   useEffect(() => {
-    handleSubmit("data");
+    if (canApply()) {
+      handleSubmit("data");
+    }
   }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
-    if (results.length) {
+    if (results.length && canApply()) {
       handleSubmit("count");
     }
   }, [results]);
@@ -185,7 +256,7 @@ export default function FilterDrawer({
       </div>
       <Drawer
         PaperProps={{
-          className: "p-2",
+          className: "p-2 vertical-scrollbar",
           sx: {
             backgroundColor: "rgb(243 244 246)",
           },
@@ -233,268 +304,706 @@ export default function FilterDrawer({
                 </h4>
 
                 <div>
-                  <h3>Choose fields to filter against:</h3>
+                  <div className="flex gap-2 flex-wrap items-center">
+                    <div>Choose fields to filter against:</div>
+                    <div
+                      className={`border rounded-full flex items-center gap-2 px-2 duration-300 ${
+                        filterType === "range"
+                          ? "border-teal-800 bg-teal-50"
+                          : "bg-white"
+                      }`}
+                    >
+                      <Switch
+                        checked={filterType === "range"}
+                        onChange={(_, checked) => {
+                          if (checked) {
+                            setFilterType("range");
+
+                            setRequestPayload({
+                              case: {},
+                              payment_information: {},
+                            });
+                          } else {
+                            setFilterType("single");
+                            setRangePayload({
+                              case: {},
+                              payment_information: {},
+                            });
+                          }
+                          setRequestColumns({
+                            case: [],
+                            payment_information: [],
+                          });
+                        }}
+                        size="small"
+                        sx={MUI_STYLES.Switch}
+                      />
+                      <span className="text-sm">Use Ranges</span>
+                    </div>
+                  </div>
                   <KTabs
                     items={[
-                      {
-                        label: <h4>Case</h4>,
-                        panel: (
-                          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4 vertical-scrollbar p-2 border rounded max-h-48 bg-gray-50/75 shadow">
-                            <TanstackSuspense
-                              fallback={
-                                <div className="flex items-center gap-2 bg-white shadow p-4 rounded">
-                                  <span className=" animate-spin">
-                                    <Cog8ToothIcon height={20} />
-                                  </span>
-                                  <div>Fetching clients...</div>
-                                </div>
-                              }
-                              queryKey={[TANSTACK_QUERY_KEYS.ALL_CLIENTS]}
-                              queryFn={() =>
-                                handleRequest<PartialClient[]>({
-                                  func: axiosGet,
-                                  args: [APIS.clients.getAllClients],
-                                })
-                              }
-                              RenderData={({ data }) => {
-                                if (data.status === "ok" && data.result) {
-                                  const clients = data.result;
+                      ...(filterType === "single"
+                        ? [
+                            {
+                              label: (
+                                <h4 className={`relative`}>
+                                  <span>Case</span>
+                                  {!!requestColumns.case.length && (
+                                    <span className="absolute bottom-full bg-teal-800 text-xs text-white self-start h-4 w-4 rounded-full items-center justify-center">
+                                      {requestColumns.case.length}
+                                    </span>
+                                  )}
+                                </h4>
+                              ),
+                              panel: (
+                                <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4 vertical-scrollbar p-2 border rounded max-h-48 bg-gray-50/75 shadow">
+                                  <TanstackSuspense
+                                    fallback={
+                                      <div className="flex items-center gap-2 bg-white shadow p-4 rounded">
+                                        <span className=" animate-spin">
+                                          <Cog8ToothIcon height={20} />
+                                        </span>
+                                        <div>Fetching clients...</div>
+                                      </div>
+                                    }
+                                    queryKey={[TANSTACK_QUERY_KEYS.ALL_CLIENTS]}
+                                    queryFn={() =>
+                                      handleRequest<PartialClient[]>({
+                                        func: axiosGet,
+                                        args: [APIS.clients.getAllClients],
+                                      })
+                                    }
+                                    RenderData={({ data }) => {
+                                      if (data.status === "ok" && data.result) {
+                                        const clients = data.result;
 
-                                  const clientInputOptions: InputOption[] =
-                                    clients.map(({ id, name }) => ({
-                                      name,
-                                      level: 0,
-                                      type: "item",
-                                      value: id,
-                                    }));
+                                        const clientInputOptions: InputOption[] =
+                                          clients.map(({ id, name }) => ({
+                                            name,
+                                            level: 0,
+                                            type: "item",
+                                            value: id,
+                                          }));
 
-                                  return (
-                                    <>
-                                      {clients.length > 0 ? (
-                                        <div className="bg-white p-2 rounded shadow flex items-center">
-                                          <h5 className="flex gap-2 items-center">
-                                            <Checkbox
-                                              checked={requestColumns.case.includes(
-                                                "client_id"
-                                              )}
-                                              onChange={(_, checked) => {
-                                                if (
-                                                  checked &&
-                                                  !requestColumns.case.includes(
+                                        return (
+                                          <>
+                                            {clients.length > 0 ? (
+                                              <div
+                                                className={`bg-white p-2 rounded shadow flex items-center ${
+                                                  requestColumns.case.includes(
                                                     "client_id"
-                                                  )
-                                                ) {
-                                                  setRequestColumns((p) => ({
-                                                    ...p,
-                                                    case: [
-                                                      ...p.case,
-                                                      "client_id",
+                                                  ) &&
+                                                  "ring-1 ring-inset ring-teal-800"
+                                                }`}
+                                              >
+                                                <h5 className="flex gap-2 items-center">
+                                                  <Checkbox
+                                                    checked={requestColumns.case.includes(
+                                                      "client_id"
+                                                    )}
+                                                    onChange={(_, checked) => {
+                                                      if (
+                                                        checked &&
+                                                        !requestColumns.case.includes(
+                                                          "client_id"
+                                                        )
+                                                      ) {
+                                                        setRequestColumns(
+                                                          (p) => ({
+                                                            ...p,
+                                                            case: [
+                                                              ...p.case,
+                                                              "client_id",
+                                                            ],
+                                                          })
+                                                        );
+                                                      } else {
+                                                        setRequestColumns(
+                                                          (p) => ({
+                                                            ...p,
+                                                            case: p.case.filter(
+                                                              (k) =>
+                                                                k !==
+                                                                "client_id"
+                                                            ),
+                                                          })
+                                                        );
+                                                        delete requestPayload
+                                                          .case["client_id"];
+                                                      }
+                                                    }}
+                                                    size="small"
+                                                    sx={MUI_STYLES.CheckBox}
+                                                  />
+                                                  {/* <span>Client</span> */}
+                                                </h5>
+                                                <InputField
+                                                  enabled={requestColumns.case.includes(
+                                                    "client_id"
+                                                  )}
+                                                  name="client_id"
+                                                  label="Select Client"
+                                                  onChange={(newValue) => {
+                                                    setRequestPayload((p) => ({
+                                                      ...p,
+                                                      case: {
+                                                        ...p.case,
+                                                        client_id: newValue,
+                                                      },
+                                                    }));
+                                                  }}
+                                                  value={
+                                                    requestPayload.case[
+                                                      "client_id"
+                                                    ] || ""
+                                                  }
+                                                  options={{
+                                                    type: "select",
+                                                    options: [
+                                                      {
+                                                        name: "None",
+                                                        level: 0,
+                                                        type: "item",
+                                                        value: "",
+                                                      },
+                                                      ...clientInputOptions,
                                                     ],
-                                                  }));
-                                                } else {
-                                                  setRequestColumns((p) => ({
-                                                    ...p,
-                                                    case: p.case.filter(
-                                                      (k) => k !== "client_id"
-                                                    ),
-                                                  }));
-                                                  delete requestPayload.case[
-                                                    "client_id"
-                                                  ];
-                                                }
-                                              }}
-                                              size="small"
-                                              sx={MUI_STYLES.CheckBox}
-                                            />
-                                            {/* <span>Client</span> */}
-                                          </h5>
-                                          <InputField
-                                            enabled={requestColumns.case.includes(
-                                              "client_id"
+                                                  }}
+                                                  required={true}
+                                                />
+                                              </div>
+                                            ) : (
+                                              <div className="flex items-center justify-between gap-2 bg-teal-50 shadow p-4 rounded">
+                                                No clients found...
+                                              </div>
                                             )}
-                                            name="client_id"
-                                            label="Select Client"
-                                            onChange={(newValue) => {
+                                          </>
+                                        );
+                                      }
+                                      return (
+                                        <div>
+                                          <Alert severity="error">
+                                            Sorry, an error occured while
+                                            fetching clients
+                                          </Alert>
+                                        </div>
+                                      );
+                                    }}
+                                  />
+                                  {filterFields.matchColumns.case.map(
+                                    (f, index) => (
+                                      <div
+                                        key={index}
+                                        className={`bg-white p-2 rounded shadow ${
+                                          requestColumns.case.includes(f) &&
+                                          "ring-1 ring-inset ring-teal-800"
+                                        }`}
+                                      >
+                                        <h5 className="flex gap-2 items-center">
+                                          <Checkbox
+                                            checked={requestColumns.case.includes(
+                                              f
+                                            )}
+                                            onChange={(_, checked) => {
+                                              if (
+                                                checked &&
+                                                !requestColumns.case.includes(f)
+                                              ) {
+                                                setRequestColumns((p) => ({
+                                                  ...p,
+                                                  case: [...p.case, f],
+                                                }));
+                                              } else {
+                                                setRequestColumns((p) => ({
+                                                  ...p,
+                                                  case: p.case.filter(
+                                                    (k) => k !== f
+                                                  ),
+                                                }));
+                                                delete requestPayload.case[f];
+                                              }
+                                            }}
+                                            size="small"
+                                            sx={MUI_STYLES.CheckBox}
+                                          />
+                                          <span>{snakeCaseToTitleCase(f)}</span>
+                                        </h5>
+                                        <div className="">
+                                          <input
+                                            // type={idx > 2 ? "number" : "text"}
+                                            onChange={(e) => {
                                               setRequestPayload((p) => ({
                                                 ...p,
                                                 case: {
                                                   ...p.case,
-                                                  client_id: newValue,
+                                                  [f]: e.target.value,
+                                                },
+                                              }));
+                                            }}
+                                            value={requestPayload.case[f] || ""}
+                                            disabled={
+                                              !requestColumns.case.includes(f)
+                                            }
+                                            required={requestColumns.case.includes(
+                                              f
+                                            )}
+                                            placeholder="..."
+                                            className="w-full bg-transparent outline-none border-b px-2 border-teal-800 disabled:border-gray-300 duration-300"
+                                          />
+                                        </div>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              ),
+                            },
+                            {
+                              label: (
+                                <h4 className={`relative`}>
+                                  <span>Payment information</span>
+                                  {!!requestColumns.payment_information
+                                    .length && (
+                                    <span className="absolute bottom-full bg-teal-800 text-xs text-white self-start h-4 w-4 rounded-full items-center justify-center">
+                                      {
+                                        requestColumns.payment_information
+                                          .length
+                                      }
+                                    </span>
+                                  )}
+                                </h4>
+                              ),
+                              panel: (
+                                <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4 vertical-scrollbar p-2 border rounded max-h-48 bg-gray-50/75 shadow">
+                                  {filterFields.matchColumns.paymentInformation.map(
+                                    (f, index) => (
+                                      <div
+                                        key={index}
+                                        className={`bg-white p-2 rounded shadow ${
+                                          requestColumns.payment_information.includes(
+                                            f
+                                          ) && "ring-1 ring-inset ring-teal-800"
+                                        }`}
+                                      >
+                                        <h5 className="flex gap-2 items-center">
+                                          <Checkbox
+                                            checked={requestColumns.payment_information.includes(
+                                              f
+                                            )}
+                                            onChange={(_, checked) => {
+                                              if (
+                                                checked &&
+                                                !requestColumns.payment_information.includes(
+                                                  f
+                                                )
+                                              ) {
+                                                setRequestColumns((p) => ({
+                                                  ...p,
+                                                  payment_information: [
+                                                    ...p.payment_information,
+                                                    f,
+                                                  ],
+                                                }));
+                                              } else {
+                                                setRequestColumns((p) => ({
+                                                  ...p,
+                                                  payment_information:
+                                                    p.payment_information.filter(
+                                                      (k) => k !== f
+                                                    ),
+                                                }));
+                                                delete requestPayload
+                                                  .payment_information[f];
+                                              }
+                                            }}
+                                            size="small"
+                                            sx={MUI_STYLES.CheckBox}
+                                          />
+                                          <span>{snakeCaseToTitleCase(f)}</span>
+                                        </h5>
+                                        <div className="">
+                                          <input
+                                            // type={idx > 2 ? "number" : "text"}
+                                            onChange={(e) => {
+                                              setRequestPayload((p) => ({
+                                                ...p,
+                                                payment_information: {
+                                                  ...p.payment_information,
+                                                  [f]: e.target.value,
                                                 },
                                               }));
                                             }}
                                             value={
-                                              requestPayload.case[
-                                                "client_id"
-                                              ] || ""
+                                              requestPayload
+                                                .payment_information[f] || ""
                                             }
-                                            options={{
-                                              type: "select",
-                                              options: [
-                                                {
-                                                  name: "None",
-                                                  level: 0,
-                                                  type: "item",
-                                                  value: "",
-                                                },
-                                                ...clientInputOptions,
-                                              ],
-                                            }}
-                                            required={true}
+                                            disabled={
+                                              !requestColumns.payment_information.includes(
+                                                f
+                                              )
+                                            }
+                                            required={requestColumns.payment_information.includes(
+                                              f
+                                            )}
+                                            placeholder="..."
+                                            className="w-full bg-transparent outline-none border-b px-2 border-teal-800 disabled:border-gray-300 duration-300"
                                           />
                                         </div>
-                                      ) : (
-                                        <div className="flex items-center justify-between gap-2 bg-teal-50 shadow p-4 rounded">
-                                          No clients found...
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              ),
+                            },
+                          ]
+                        : [
+                            {
+                              label: (
+                                <h4 className={`relative`}>
+                                  <span>Cases</span>
+                                  {!!requestColumns.case.length && (
+                                    <span className="absolute bottom-full bg-teal-800 text-xs text-white self-start h-4 w-4 rounded-full items-center justify-center">
+                                      {requestColumns.case.length}
+                                    </span>
+                                  )}
+                                </h4>
+                              ),
+                              panel: (
+                                <div className="grid gap-2 md:grid-cols-2 vertical-scrollbar p-2 border rounded max-h-48 bg-gray-50/75 shadow">
+                                  {filterFields.rangeableColumns.case.map(
+                                    (f, index) => (
+                                      <div
+                                        key={index}
+                                        className={`bg-white p-2 rounded shadow ${
+                                          requestColumns.case.includes(f) &&
+                                          "ring-1 ring-inset ring-teal-800"
+                                        }`}
+                                      >
+                                        <h5 className="flex gap-2 items-center">
+                                          <Checkbox
+                                            checked={requestColumns.case.includes(
+                                              f
+                                            )}
+                                            onChange={(_, checked) => {
+                                              if (
+                                                checked &&
+                                                !requestColumns.case.includes(f)
+                                              ) {
+                                                setRequestColumns((p) => ({
+                                                  ...p,
+                                                  case: [...p.case, f],
+                                                }));
+                                              } else {
+                                                setRequestColumns((p) => ({
+                                                  ...p,
+                                                  case: p.case.filter(
+                                                    (k) => k !== f
+                                                  ),
+                                                }));
+                                                delete rangePayload.case[f];
+                                              }
+                                            }}
+                                            size="small"
+                                            sx={MUI_STYLES.CheckBox}
+                                          />
+                                          <span>{snakeCaseToTitleCase(f)}</span>
+                                        </h5>
+                                        <div className="grid grid-cols-5">
+                                          <input
+                                            type={
+                                              f === "created_at" ||
+                                              f === "updated_at"
+                                                ? "datetime-local"
+                                                : "number"
+                                            }
+                                            onChange={(e) => {
+                                              if (rangePayload.case[f]) {
+                                                const second =
+                                                  rangePayload.case[f][1];
+
+                                                setRangePayload((p) => ({
+                                                  ...p,
+                                                  case: {
+                                                    ...p.case,
+                                                    [f]: [
+                                                      e.target.value,
+                                                      second,
+                                                    ],
+                                                  },
+                                                }));
+                                              } else {
+                                                setRangePayload((p) => ({
+                                                  ...p,
+                                                  case: {
+                                                    ...p.case,
+                                                    [f]: [e.target.value, ""],
+                                                  },
+                                                }));
+                                              }
+                                            }}
+                                            value={
+                                              rangePayload.case[f]
+                                                ? rangePayload.case[f][0] || ""
+                                                : ""
+                                            }
+                                            disabled={
+                                              !requestColumns.case.includes(f)
+                                            }
+                                            required={requestColumns.case.includes(
+                                              f
+                                            )}
+                                            placeholder="From"
+                                            className="w-full col-span-2 disabled:cursor-not-allowed bg-transparent outline-none border px-2 border-teal-800 disabled:border-gray-300 duration-300"
+                                          />
+                                          <div className="flex px-2 self-center items-center gap-2">
+                                            <span>&gt;=</span>
+                                            <span className="flex-grow border-b-4 border-dotted border-teal-800"></span>
+                                            <span>&lt;</span>
+                                          </div>
+                                          <input
+                                            type={
+                                              f === "created_at" ||
+                                              f === "updated_at"
+                                                ? "datetime-local"
+                                                : "number"
+                                            }
+                                            onChange={(e) => {
+                                              if (rangePayload.case[f]) {
+                                                const first =
+                                                  rangePayload.case[f][0];
+
+                                                setRangePayload((p) => ({
+                                                  ...p,
+                                                  case: {
+                                                    ...p.case,
+                                                    [f]: [
+                                                      first,
+                                                      e.target.value,
+                                                    ],
+                                                  },
+                                                }));
+                                              } else {
+                                                setRangePayload((p) => ({
+                                                  ...p,
+                                                  case: {
+                                                    ...p.case,
+                                                    [f]: ["", e.target.value],
+                                                  },
+                                                }));
+                                              }
+                                            }}
+                                            value={
+                                              rangePayload.case[f]
+                                                ? rangePayload.case[f][1] || ""
+                                                : ""
+                                            }
+                                            disabled={
+                                              !requestColumns.case.includes(f)
+                                            }
+                                            required={requestColumns.case.includes(
+                                              f
+                                            )}
+                                            placeholder="To"
+                                            className="w-full col-span-2 disabled:cursor-not-allowed bg-transparent outline-none border px-2 border-teal-800 disabled:border-gray-300 duration-300"
+                                          />
                                         </div>
-                                      )}
-                                    </>
-                                  );
-                                }
-                                return (
-                                  <div>
-                                    <Alert severity="error">
-                                      Sorry, an error occured while fetching
-                                      clients
-                                    </Alert>
-                                  </div>
-                                );
-                              }}
-                            />
-                            {filterFields.matchColumns.case.map((f, index) => (
-                              <div
-                                key={index}
-                                className="bg-white p-2 rounded shadow"
-                              >
-                                <h5 className="flex gap-2 items-center">
-                                  <Checkbox
-                                    checked={requestColumns.case.includes(f)}
-                                    onChange={(_, checked) => {
-                                      if (
-                                        checked &&
-                                        !requestColumns.case.includes(f)
-                                      ) {
-                                        setRequestColumns((p) => ({
-                                          ...p,
-                                          case: [...p.case, f],
-                                        }));
-                                      } else {
-                                        setRequestColumns((p) => ({
-                                          ...p,
-                                          case: p.case.filter((k) => k !== f),
-                                        }));
-                                        delete requestPayload.case[f];
-                                      }
-                                    }}
-                                    size="small"
-                                    sx={MUI_STYLES.CheckBox}
-                                  />
-                                  <span>{snakeCaseToTitleCase(f)}</span>
-                                </h5>
-                                <div className="">
-                                  <input
-                                    // type={idx > 2 ? "number" : "text"}
-                                    onChange={(e) => {
-                                      setRequestPayload((p) => ({
-                                        ...p,
-                                        case: {
-                                          ...p.case,
-                                          [f]: e.target.value,
-                                        },
-                                      }));
-                                    }}
-                                    value={requestPayload.case[f] || ""}
-                                    disabled={!requestColumns.case.includes(f)}
-                                    required={requestColumns.case.includes(f)}
-                                    placeholder="..."
-                                    className="w-full bg-transparent outline-none border-b px-2 border-teal-800 disabled:border-gray-300 duration-300"
-                                  />
+                                      </div>
+                                    )
+                                  )}
                                 </div>
-                              </div>
-                            ))}
-                          </div>
-                        ),
-                      },
-                      {
-                        label: <h4>Payment information</h4>,
-                        panel: (
-                          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4 vertical-scrollbar p-2 border rounded max-h-48 bg-gray-50/75 shadow">
-                            {filterFields.matchColumns.paymentInformation.map(
-                              (f, index) => (
-                                <div
-                                  key={index}
-                                  className="bg-white p-2 rounded shadow"
-                                >
-                                  <h5 className="flex gap-2 items-center">
-                                    <Checkbox
-                                      checked={requestColumns.payment_information.includes(
-                                        f
-                                      )}
-                                      onChange={(_, checked) => {
-                                        if (
-                                          checked &&
-                                          !requestColumns.payment_information.includes(
+                              ),
+                            },
+                            {
+                              label: (
+                                <h4 className={`relative`}>
+                                  <span>Payment information</span>
+                                  {!!requestColumns.payment_information
+                                    .length && (
+                                    <span className="absolute bottom-full bg-teal-800 text-xs text-white self-start h-4 w-4 rounded-full items-center justify-center">
+                                      {
+                                        requestColumns.payment_information
+                                          .length
+                                      }
+                                    </span>
+                                  )}
+                                </h4>
+                              ),
+                              panel: (
+                                <div className="grid gap-2 md:grid-cols-2 vertical-scrollbar p-2 border rounded max-h-48 bg-gray-50/75 shadow">
+                                  {filterFields.rangeableColumns.paymentInformation.map(
+                                    (f, index) => (
+                                      <div
+                                        key={index}
+                                        className={`bg-white p-2 rounded shadow ${
+                                          requestColumns.payment_information.includes(
                                             f
-                                          )
-                                        ) {
-                                          setRequestColumns((p) => ({
-                                            ...p,
-                                            payment_information: [
-                                              ...p.payment_information,
-                                              f,
-                                            ],
-                                          }));
-                                        } else {
-                                          setRequestColumns((p) => ({
-                                            ...p,
-                                            payment_information:
-                                              p.payment_information.filter(
-                                                (k) => k !== f
-                                              ),
-                                          }));
-                                          delete requestPayload
-                                            .payment_information[f];
-                                        }
-                                      }}
-                                      size="small"
-                                      sx={MUI_STYLES.CheckBox}
-                                    />
-                                    <span>{snakeCaseToTitleCase(f)}</span>
-                                  </h5>
-                                  <div className="">
-                                    <input
-                                      // type={idx > 2 ? "number" : "text"}
-                                      onChange={(e) => {
-                                        setRequestPayload((p) => ({
-                                          ...p,
-                                          payment_information: {
-                                            ...p.payment_information,
-                                            [f]: e.target.value,
-                                          },
-                                        }));
-                                      }}
-                                      value={
-                                        requestPayload.payment_information[f] ||
-                                        ""
-                                      }
-                                      disabled={
-                                        !requestColumns.payment_information.includes(
-                                          f
-                                        )
-                                      }
-                                      required={requestColumns.payment_information.includes(
-                                        f
-                                      )}
-                                      placeholder="..."
-                                      className="w-full bg-transparent outline-none border-b px-2 border-teal-800 disabled:border-gray-300 duration-300"
-                                    />
-                                  </div>
+                                          ) && "ring-1 ring-inset ring-teal-800"
+                                        }`}
+                                      >
+                                        <h5 className="flex gap-2 items-center">
+                                          <Checkbox
+                                            checked={requestColumns.payment_information.includes(
+                                              f
+                                            )}
+                                            onChange={(_, checked) => {
+                                              if (
+                                                checked &&
+                                                !requestColumns.payment_information.includes(
+                                                  f
+                                                )
+                                              ) {
+                                                setRequestColumns((p) => ({
+                                                  ...p,
+                                                  payment_information: [
+                                                    ...p.payment_information,
+                                                    f,
+                                                  ],
+                                                }));
+                                              } else {
+                                                setRequestColumns((p) => ({
+                                                  ...p,
+                                                  payment_information:
+                                                    p.payment_information.filter(
+                                                      (k) => k !== f
+                                                    ),
+                                                }));
+                                                delete requestPayload
+                                                  .payment_information[f];
+                                              }
+                                            }}
+                                            size="small"
+                                            sx={MUI_STYLES.CheckBox}
+                                          />
+                                          <span>{snakeCaseToTitleCase(f)}</span>
+                                        </h5>
+                                        <div className="grid grid-cols-5">
+                                          <input
+                                            type={
+                                              f === "created_at" ||
+                                              f === "updated_at"
+                                                ? "datetime-local"
+                                                : "number"
+                                            }
+                                            onChange={(e) => {
+                                              if (
+                                                rangePayload
+                                                  .payment_information[f]
+                                              ) {
+                                                const second =
+                                                  rangePayload
+                                                    .payment_information[f][1];
+
+                                                setRangePayload((p) => ({
+                                                  ...p,
+                                                  payment_information: {
+                                                    ...p.payment_information,
+                                                    [f]: [
+                                                      e.target.value,
+                                                      second,
+                                                    ],
+                                                  },
+                                                }));
+                                              } else {
+                                                setRangePayload((p) => ({
+                                                  ...p,
+                                                  payment_information: {
+                                                    ...p.payment_information,
+                                                    [f]: [e.target.value, ""],
+                                                  },
+                                                }));
+                                              }
+                                            }}
+                                            value={
+                                              rangePayload.payment_information[
+                                                f
+                                              ]
+                                                ? rangePayload
+                                                    .payment_information[
+                                                    f
+                                                  ][0] || ""
+                                                : ""
+                                            }
+                                            disabled={
+                                              !requestColumns.payment_information.includes(
+                                                f
+                                              )
+                                            }
+                                            required={requestColumns.payment_information.includes(
+                                              f
+                                            )}
+                                            placeholder="From"
+                                            className="w-full col-span-2 disabled:cursor-not-allowed bg-transparent outline-none border px-2 border-teal-800 disabled:border-gray-300 duration-300"
+                                          />
+                                          <div className="flex px-2 self-center items-center gap-2">
+                                            <span>&gt;=</span>
+                                            <span className="flex-grow border-b-4 border-dotted border-teal-800"></span>
+                                            <span>&lt;</span>
+                                          </div>
+                                          <input
+                                            type={
+                                              f === "created_at" ||
+                                              f === "updated_at"
+                                                ? "datetime-local"
+                                                : "number"
+                                            }
+                                            onChange={(e) => {
+                                              if (
+                                                rangePayload
+                                                  .payment_information[f]
+                                              ) {
+                                                const first =
+                                                  rangePayload
+                                                    .payment_information[f][0];
+
+                                                setRangePayload((p) => ({
+                                                  ...p,
+                                                  payment_information: {
+                                                    ...p.payment_information,
+                                                    [f]: [
+                                                      first,
+                                                      e.target.value,
+                                                    ],
+                                                  },
+                                                }));
+                                              } else {
+                                                setRangePayload((p) => ({
+                                                  ...p,
+                                                  payment_information: {
+                                                    ...p.payment_information,
+                                                    [f]: ["", e.target.value],
+                                                  },
+                                                }));
+                                              }
+                                            }}
+                                            value={
+                                              rangePayload.payment_information[
+                                                f
+                                              ]
+                                                ? rangePayload
+                                                    .payment_information[
+                                                    f
+                                                  ][1] || ""
+                                                : ""
+                                            }
+                                            disabled={
+                                              !requestColumns.payment_information.includes(
+                                                f
+                                              )
+                                            }
+                                            required={requestColumns.payment_information.includes(
+                                              f
+                                            )}
+                                            placeholder="To"
+                                            className="w-full col-span-2 disabled:cursor-not-allowed bg-transparent outline-none border px-2 border-teal-800 disabled:border-gray-300 duration-300"
+                                          />
+                                        </div>
+                                      </div>
+                                    )
+                                  )}
                                 </div>
-                              )
-                            )}
-                          </div>
-                        ),
-                      },
+                              ),
+                            },
+                          ]),
                     ]}
                   />
                 </div>
@@ -504,14 +1013,26 @@ export default function FilterDrawer({
                   <KTabs
                     items={[
                       {
-                        label: <h3>Desired case fields</h3>,
+                        label: (
+                          <h4 className={`relative`}>
+                            <span>Desired case fields</span>
+                            {!!responseColumns.case.length && (
+                              <span className="absolute bottom-full bg-teal-800 text-xs text-white self-start h-4 w-4 rounded-full items-center justify-center">
+                                {responseColumns.case.length}
+                              </span>
+                            )}
+                          </h4>
+                        ),
                         panel: (
-                          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4 vertical-scrollbar p-2 border rounded max-h-48 bg-gray-50/75 shadow">
+                          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 vertical-scrollbar p-2 border rounded max-h-48 bg-gray-50/75 shadow">
                             {filterFields.responseColumns.case.map(
                               (f, index) => (
                                 <div
                                   key={index}
-                                  className="flex items-center gap-2 bg-white rounded shadow"
+                                  className={`flex items-center gap-2 bg-white rounded shadow ${
+                                    responseColumns.case.includes(f) &&
+                                    "ring-1 ring-inset ring-teal-800"
+                                  }`}
                                 >
                                   <Checkbox
                                     checked={responseColumns.case.includes(f)}
@@ -542,14 +1063,27 @@ export default function FilterDrawer({
                         ),
                       },
                       {
-                        label: <h3>Desired payment information fields</h3>,
+                        label: (
+                          <h4 className={`relative`}>
+                            <span>Desired payment information fields</span>
+                            {!!responseColumns.payment_information.length && (
+                              <span className="absolute bottom-full bg-teal-800 text-xs text-white self-start h-4 w-4 rounded-full items-center justify-center">
+                                {responseColumns.payment_information.length}
+                              </span>
+                            )}
+                          </h4>
+                        ),
                         panel: (
-                          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4 vertical-scrollbar p-2 border rounded max-h-48 bg-gray-50/75 shadow">
+                          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 vertical-scrollbar p-2 border rounded max-h-48 bg-gray-50/75 shadow">
                             {filterFields.responseColumns.paymentInformation.map(
                               (f, index) => (
                                 <div
                                   key={index}
-                                  className="flex items-center gap-2 bg-white rounded shadow"
+                                  className={`flex items-center gap-2 bg-white rounded shadow ${
+                                    responseColumns.payment_information.includes(
+                                      f
+                                    ) && "ring-1 ring-inset ring-teal-800"
+                                  }`}
                                 >
                                   <Checkbox
                                     checked={responseColumns.payment_information.includes(
@@ -616,41 +1150,35 @@ export default function FilterDrawer({
                         : "info"
                     }`}
                   >
-                    Atleast one response columns selected!
+                    {filterType === "single"
+                      ? "Atleast one response columns selected!"
+                      : "You will always get all the case attributes in the result set if you do not specify response columns."}
                   </Alert>
-                  <Alert
-                    square
-                    sx={{ paddingY: 0 }}
-                    severity={`${
-                      requestColumns.case.some(
-                        (col) => !!requestPayload.case[col]
-                      ) ||
-                      requestColumns.payment_information.some(
-                        (col) => !!requestPayload.payment_information[col]
-                      )
-                        ? "success"
-                        : "info"
-                    }`}
-                  >
-                    No empty fields
-                  </Alert>
+                  {filterType === "single" ? (
+                    <Alert
+                      square
+                      sx={{ paddingY: 0 }}
+                      severity={`${
+                        !emptyRequestPayloadFields() ? "success" : "info"
+                      }`}
+                    >
+                      No empty fields
+                    </Alert>
+                  ) : (
+                    <Alert className="">
+                      {`Empty fields for the minimum values when using ranges are
+                      coerced to zero for number fields and ${new Date(
+                        1
+                      ).toDateString()} ${new Date(1).toTimeString()}
+                      for date or time fields`}
+                    </Alert>
+                  )}
                 </div>
 
                 <div className="flex gap-2 flex-wrap">
                   <LoadingButton
                     onClick={() => handleSubmit("data")}
-                    disabled={
-                      (requestColumns.case.length < 1 &&
-                        requestColumns.payment_information.length < 1) ||
-                      (responseColumns.case.length < 1 &&
-                        responseColumns.payment_information.length < 1) ||
-                      requestColumns.case.some(
-                        (col) => !!!requestPayload.case[col]
-                      ) ||
-                      requestColumns.payment_information.some(
-                        (col) => !!!requestPayload.payment_information[col]
-                      )
-                    }
+                    disabled={!canApply()}
                     loading={filtering}
                     sx={{
                       ...MUI_STYLES.Button2,
@@ -721,7 +1249,9 @@ export default function FilterDrawer({
                         {allResponseColumns().map((column, index) => (
                           <th
                             key={`th#${index}`}
-                            className="text-start px-2 text-teal-800 py-1 truncate"
+                            className={`text-start px-2 text-teal-800 py-1 truncate max-w-64 ${
+                              index > 0 && "border-l"
+                            }`}
                           >
                             {snakeCaseToTitleCase(column)}
                           </th>
@@ -731,13 +1261,12 @@ export default function FilterDrawer({
                     <tbody>
                       {results?.map((record, index) => (
                         <tr key={index} className="border-t">
-                          {[
-                            ...responseColumns.case,
-                            ...responseColumns.payment_information,
-                          ].map((column, index) => (
+                          {allResponseColumns().map((column, index) => (
                             <td
                               key={`td#${index}`}
-                              className="px-2 py-1 truncate"
+                              className={`px-2 py-1 truncate max-w-64 ${
+                                index > 0 && "border-l"
+                              }`}
                             >
                               {record[column]}
                             </td>
@@ -774,6 +1303,7 @@ export default function FilterDrawer({
 
                   <div className="flex-grow flex">
                     <Pagination
+                      disabled={!canApply()}
                       page={currentPage}
                       onChange={(_, page) => {
                         setNextPage(page);

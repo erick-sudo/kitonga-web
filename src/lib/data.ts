@@ -56,7 +56,7 @@ export const filterFields = {
     ],
   },
   rangeableColumns: {
-    case: ["created_at", "updated_at"],
+    case: ["record", "created_at", "updated_at"],
     paymentInformation: [
       "outstanding",
       "paid_amount",

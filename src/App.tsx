@@ -10,6 +10,7 @@ import { Signin } from "./ui/acc/Signin";
 import { ForgotPassword } from "./ui/acc/ForgotPassword";
 import NotSignedIn from "./ui/NotSignedIn";
 import NotFound from "./ui/NotFound";
+import { CircularProgress } from "@mui/material";
 
 function App() {
   return (
@@ -20,7 +21,11 @@ function App() {
           path="/dashboard/*"
           element={
             <TanstackSuspense
-              fallback={<div>Loading...</div>}
+              fallback={
+                <div className="text-teal-800/50 border min-h-screen flex items-center justify-center">
+                  <CircularProgress color="inherit" />
+                </div>
+              }
               queryKey={[TANSTACK_QUERY_KEYS.CURRENT_USER]}
               queryFn={fetchCurrentUser}
               RenderData={({ data }) => {
@@ -47,7 +52,7 @@ function App() {
         />
         <Route path="/sign-in" element={<Signin />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<NotFound className="min-h-screen" />} />
       </Routes>
     </div>
   );

@@ -30,6 +30,8 @@ export interface Case {
 export interface Client extends Principal {
   address: string;
   contact_number: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PartialClient {

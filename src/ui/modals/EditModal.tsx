@@ -8,7 +8,7 @@ import { LoadingButton } from "@mui/lab";
 export type InputFieldType = "text" | "number" | "select" | "textarea";
 
 export interface TextFieldOptions {
-  type: "text" | "number";
+  type: "text" | "number" | "email" | "password";
 }
 
 export interface SelectableFieldOptions {

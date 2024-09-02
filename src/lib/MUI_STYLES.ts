@@ -23,6 +23,10 @@ export const MUI_STYLES = {
     },
   },
   Tab: {
+    "&.MuiTab-root": {
+      paddingBottom: 0,
+    },
+    paddingBottom: 0,
     "&.Mui-selected": {
       color: KitongaColorScheme.teal900,
     },
@@ -48,6 +52,7 @@ export const MUI_STYLES = {
       color: KitongaColorScheme.teal800,
     },
   },
+  Switch: {},
   TextField: {
     margin: 0,
     "& label.Mui-focused": {

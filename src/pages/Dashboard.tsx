@@ -20,47 +20,42 @@ import { ReactStateSetter } from "../ui/definitions";
 import { KitongaColorScheme } from "../lib/MUI_STYLES";
 import { Cases } from "./cases/Cases";
 import { Folder } from "@mui/icons-material";
+import NotFound from "../ui/NotFound";
+import { Clients } from "./clients/Clients";
 
 function NavigationLinks() {
   return (
     <div>
       <NavLink
-        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-4 py-1 rounded"
+        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-2 py-1 rounded"
         to="/dashboard"
       >
         <ChartPieIcon height={20} />
         <span>Analytics</span>
       </NavLink>
       <NavLink
-        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-4 py-1 rounded"
+        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-2 py-1 rounded"
         to="/dashboard/cases"
       >
         <Folder fontSize="small" />
         <span>Cases</span>
       </NavLink>
       <NavLink
-        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-4 py-1 rounded"
-        to="/dashboard/cases/NEW"
-      >
-        <PlusIcon height={20} />
-        <span>New Case</span>
-      </NavLink>
-      <NavLink
-        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-4 py-1 rounded"
+        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-2 py-1 rounded"
         to="/dashboard/clients"
       >
         <UsersIcon height={20} />
         <span>Clients</span>
       </NavLink>
       <NavLink
-        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-4 py-1 rounded"
+        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-2 py-1 rounded"
         to="/dashboard/users"
       >
         <UserPlusIcon height={20} />
         <span>Users</span>
       </NavLink>
       <NavLink
-        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-4 py-1 rounded"
+        className="flex items-center gap-2 hover:bg-teal-800 hover:ring-1 hover:ring-teal-900 hover:text-white duration-300 px-2 py-1 rounded"
         to="/dashboard/settings"
       >
         <Cog8ToothIcon height={20} />
@@ -140,13 +135,14 @@ export function Dashboard() {
             onClose={() => setHide(true)}
             open={!hide}
           >
-            <div className="flex justify-betweeen items-center gap-4 p-4">
+            <div className="flex justify-between items-center p-2">
+              <h3 className="px-2">Kitonga</h3>
               <IconButton onClick={() => setHide(true)}>
                 <XMarkIcon className="text-teal-600" height={20} />
               </IconButton>
             </div>
 
-            <div className="flex-grow flex flex-col p-2 dash-vertical-scrollbar">
+            <div className="flex-grow flex flex-col p-2 min-w-48">
               {/* Nav Items */}
               <NavigationLinks />
             </div>
@@ -166,7 +162,8 @@ export function Dashboard() {
               <Routes>
                 <Route path="" element={<Analytics />} />
                 <Route path="cases/*" element={<Cases />} />
-                <Route path="clients/*" element={<div>Clients</div>} />
+                <Route path="clients/*" element={<Clients />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
           </div>
