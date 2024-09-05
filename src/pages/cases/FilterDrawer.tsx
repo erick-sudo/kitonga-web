@@ -57,10 +57,12 @@ const fillRanges = (p: Record<string, (string | number)[]>) =>
         const ranges = [];
         if (dateFields.includes(k)) {
           ranges.push(v[0] || new Date(1).toLocaleDateString());
-          ranges.push(v[1] || new Date(1).toLocaleDateString());
+          ranges.push(v[1] || new Date().toLocaleDateString());
         } else {
           ranges.push(Number(v[0]) || 0);
-          ranges.push(Number(v[1]) || 0);
+          if (Number(v[1])) {
+            ranges.push(Number(v[1]));
+          }
         }
         acc[k] = ranges;
       }
@@ -275,7 +277,7 @@ export default function FilterDrawer({
             <div className="">
               <div className="grid gap-2">
                 {/* Flexibility */}
-                <div className="bg-gray-50 p-2 rounded shadow">
+                <div className="bg-white p-2 rounded shadow">
                   <h3>Flexibility of filter</h3>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center">

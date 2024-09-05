@@ -8,12 +8,12 @@ export default function Home() {
       <Card
         icon={{
           content: <CodeBracketIcon height={24} />,
-          height: 196,
+          height: 96,
           width: 96,
         }}
         border={{
           color: "teal",
-          width: 8,
+          width: 12,
         }}
         background="white"
       >
@@ -72,8 +72,8 @@ function Card({
               width: `${icon.width}px`,
               backgroundColor: background,
               borderRadius: `${width * 0.5}px`,
-              borderTopLeftRadius: `${width * 3.5}px`,
-              borderBottomRightRadius: `${width * 5}px`,
+              borderTopLeftRadius: `${width * 3.3}px`,
+              borderBottomRightRadius: `${width * 4.3}px`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

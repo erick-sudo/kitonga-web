@@ -37,7 +37,7 @@ export function CaseDetails() {
   }
 
   return (
-    <div className="px-4 pb-4">
+    <div className="p-2">
       <div className="flex flex-col gap-8">
         <div>
           <div>

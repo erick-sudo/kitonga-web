@@ -1,6 +1,13 @@
-// Principal interface
-export interface Principal {
+export interface Entity {
   id: string;
+}
+
+export interface TimeStamps {
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Principal extends Entity {
   username: string;
   name: string;
   email: string;
@@ -12,30 +19,46 @@ export interface CurrentUser {
   authorities: string[];
 }
 
-export interface Case {
-  id: string;
+export interface ResourceAction extends Entity, TimeStamps {
+  name: string;
+}
+
+export interface AccessPolicy extends Entity, TimeStamps {
+  name: string;
+  effect: "Deny" | "Allow";
+  description: string;
+  actions: string[];
+  principals: string[];
+  resources: string[];
+  conditions: string[];
+}
+
+export type CreateAccessPolicyDto = Omit<
+  AccessPolicy,
+  keyof TimeStamps | keyof Entity
+>;
+
+export interface RecentCase extends Entity, TimeStamps {
   title: string;
+  record: string;
+  status: string;
+}
+
+export interface Case extends RecentCase {
   description: string;
   case_no_or_parties: string;
-  record: string;
   file_reference: string;
   clients_reference: string;
   client_id: string;
-  status: string;
   payment_initialized: boolean;
-  created_at: string;
-  updated_at: string;
 }
 
-export interface Client extends Principal {
+export interface Client extends Principal, TimeStamps {
   address: string;
   contact_number: string;
-  created_at: string;
-  updated_at: string;
 }
 
-export interface PartialClient {
-  id: string;
+export interface PartialClient extends Entity {
   name: string;
 }
 
@@ -59,18 +82,14 @@ export interface InitializePaymentInformationDto {
   payment?: Payment | null;
 }
 
-export interface Installment {
-  id: string;
+export interface Installment extends Entity, TimeStamps {
   amount: number;
   payment_method: PaymentMethod;
   payment_type: PaymentType;
   payment_information_id: string;
-  created_at: string;
-  updated_at: string;
 }
 
-export interface PaymentInformation {
-  id: string;
+export interface PaymentInformation extends Entity {
   case_id: string;
   payment_type: PaymentType;
   outstanding: number;

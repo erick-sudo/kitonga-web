@@ -11,8 +11,10 @@ import { ForgotPassword } from "./ui/acc/ForgotPassword";
 import NotSignedIn from "./ui/NotSignedIn";
 import NotFound from "./ui/NotFound";
 import { CircularProgress } from "@mui/material";
+import { useQueryClient } from "@tanstack/react-query";
 
 function App() {
+  const queryClient = useQueryClient();
   return (
     <div className="">
       <Routes>
@@ -29,8 +31,9 @@ function App() {
               queryKey={[TANSTACK_QUERY_KEYS.CURRENT_USER]}
               queryFn={fetchCurrentUser}
               RenderData={({ data }) => {
+                
                 const logout = () => {
-                  console.log("Logged out.");
+                  queryClient.clear();
                 };
 
                 if (!data) {

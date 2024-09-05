@@ -38,7 +38,7 @@ export function ClientDetails() {
     });
   }
   return (
-    <div className="px-4">
+    <div className="p-2">
       <TanstackSuspense
         fallback={<ClientDetailsSkeleton />}
         queryKey={[clientKey]}
@@ -64,7 +64,7 @@ export function ClientDetails() {
             } = data.result;
 
             return (
-              <div className="">
+              <div className="grid gap-2">
                 <div className="bg-white shadow rounded">
                   <div className="">
                     <div className="grid">
@@ -234,6 +234,48 @@ export function ClientDetails() {
                     </div>
                   </div>
                 </div>
+
+                <TanstackSuspense
+                  fallback={<ClientDetailsSkeleton />}
+                  queryKey={[`${clientKey}#status-tally`]}
+                  queryFn={() =>
+                    handleRequest<Record<string, number>>({
+                      func: axiosGet,
+                      args: [
+                        APIS.statistics.showClientCaseStatusTally.replace(
+                          "<:clientId>",
+                          `${clientId}`
+                        ),
+                      ],
+                    })
+                  }
+                  RenderData={({ data }) => {
+                    if (data.status === "ok" && data.result) {
+                      const tally = data.result;
+
+                      return (
+                        <div className="grid">
+                          {Object.entries(tally).map(([k, v], index) => (
+                            <div key={index} className="flex">
+                              <span className="w-56 px-4 py-1">{k}</span>
+                              <span className="flex-grow px-4 py-1">{v}</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+
+                    // Could not tally client cases
+                    return (
+                      <div className="shadow rounded mt-2">
+                        <Alert severity="error">
+                          <span className="block">{data.errors?.status}</span>
+                          <span className="block">{data.errors?.error}</span>
+                        </Alert>
+                      </div>
+                    );
+                  }}
+                />
               </div>
             );
           }

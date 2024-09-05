@@ -80,7 +80,7 @@ export function CaseList() {
   }
 
   return (
-    <div className="px-4 pb-4 grid gap-2">
+    <div className="p-2 grid gap-2">
       <div className="flex gap-2">
         <FilterDrawer
           anchorClassName="px-2 rounded border hover:border-teal-600 hover:text-teal-600 duration-300 flex items-center justify-center cursor-pointer"

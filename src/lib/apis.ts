@@ -7,6 +7,23 @@ export const APIS = {
     getCurrentUser: `${baseUrl}/current/user`,
     changePassword: `${baseUrl}/change/password`,
   },
+  authorization: {
+    accessPolicies: {
+      index: `${baseUrl}/authorization/access_policies`,
+      show: `${baseUrl}/authorization/access_policies/<:policyId>`,
+      create: `${baseUrl}/authorization/access_policies`,
+      destroy: `${baseUrl}/authorization/access_policies<:policyId>`,
+      count: `${baseUrl}/authorization/access_policies/stats/count`,
+    },
+    resourceActions: {
+      index: `${baseUrl}/authorization/resource_actions`,
+      show: `${baseUrl}/authorization/resource_actions/<:actionId>`,
+      create: `${baseUrl}/authorization/resource_actions`,
+      destroy: `${baseUrl}/authorization/resource_actions<:actionId>`,
+      count: `${baseUrl}/authorization/resource_actions/stats/count`,
+      search: `${baseUrl}/authorization/resource_actions/query/search`,
+    },
+  },
   statistics: {
     casesCount: `${baseUrl}/stats/cases/count`,
     clientsCount: `${baseUrl}/stats/clients/count`,
@@ -62,9 +79,10 @@ export const APIS = {
     bulkDestruction: `${baseUrl}/cases/destroy/multiple`,
   },
   dash: {
-    deepSearch: `${baseUrl}/dashboard/deep/search/<:q>`,
+    deepSearch: `${baseUrl}/dashboard/deep/search`,
     getCasesPerClient: `${baseUrl}/dashboard/cases/per/client`,
-    getDashConuts: `${baseUrl}/dashboard/counts`,
-    getFirst10MostRecentCases: `${baseUrl}/dashboard/cases/first_10_most_recent_cases`,
+    getDashCounts: `${baseUrl}/dashboard/counts`,
+    getFirst6MostRecentCases: `${baseUrl}/dashboard/cases/first_6_most_recent_cases`,
+    tallyCasesByStatus: `${baseUrl}/dashboard/cases/tally/status`,
   },
 };

@@ -101,7 +101,7 @@ export function ClientList() {
   }
 
   return (
-    <div className="px-4 pb-4 grid gap-2">
+    <div className="p-2 grid gap-2">
       <div className="flex gap-2">
         <button
           onClick={() => {
