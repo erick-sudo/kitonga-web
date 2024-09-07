@@ -19,6 +19,16 @@ export interface CurrentUser {
   authorities: string[];
 }
 
+export type PrincipalResourceType = | "iam" | "role" | "group" | "client"
+
+export type ResourceType = PrincipalResourceType  | "resourceaction" | "case";
+
+export type KRN = `krn:${ResourceType}:${string}:${string}`;
+
+export type ResourceActionKRN = `krn:resourceaction:${string}:${string}`
+
+export type PrincipalKRN = `krn:${PrincipalResourceType}:${string}:${string}`
+
 export interface ResourceAction extends Entity, TimeStamps {
   name: string;
 }
@@ -27,9 +37,9 @@ export interface AccessPolicy extends Entity, TimeStamps {
   name: string;
   effect: "Deny" | "Allow";
   description: string;
-  actions: string[];
-  principals: string[];
-  resources: string[];
+  actions: ResourceActionKRN[];
+  principals: PrincipalKRN[];
+  resources: KRN[];
   conditions: string[];
 }
 

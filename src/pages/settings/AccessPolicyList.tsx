@@ -1,7 +1,7 @@
-import { Alert, Pagination } from "@mui/material";
+import { Alert, Pagination, Tooltip } from "@mui/material";
 import useAPI from "../../hooks/useAPI";
 import { APIS } from "../../lib/apis";
-import { axiosGet } from "../../lib/axiosLib";
+import { axiosDelete, axiosGet } from "../../lib/axiosLib";
 import { AccessPolicy, Population } from "../../lib/definitions";
 import { TANSTACK_QUERY_KEYS } from "../../lib/KEYS";
 import {
@@ -9,15 +9,21 @@ import {
   TanstackSuspensePaginated,
 } from "../../ui/TanstackSuspense";
 import KDrawer from "../../ui/drawers/KDrawer";
-import { ChevronRightIcon } from "@heroicons/react/24/outline";
-import { CreateResourceActionForm } from "./CreateResourceActionForm";
-import { Add } from "@mui/icons-material";
+import {
+  ChevronRightIcon,
+  TrashIcon,
+  ViewfinderCircleIcon,
+} from "@heroicons/react/24/outline";
+import { Add, More } from "@mui/icons-material";
 import { insertQueryParams } from "../../lib/utils";
 import usePagination from "../../hooks/usePagination";
 import InputSelection from "../../ui/InputSelection";
 import { MUI_STYLES } from "../../lib/MUI_STYLES";
 import { useQueryClient } from "@tanstack/react-query";
 import { BuildNewPolicyForm } from "./BuildNewPolicyForm";
+import { ClientListSkeleton } from "../../ui/Skeletons";
+import { NavLink } from "react-router-dom";
+import DeleteModal from "../../ui/modals/DeleteModal";
 
 export function AccessPolicyList() {
   const queryClient = useQueryClient();
@@ -46,7 +52,7 @@ export function AccessPolicyList() {
               </>
             }
           >
-            <div className="p-2">
+            <div className="p-2 max-w-xl">
               <BuildNewPolicyForm
                 onNewRecord={() => {
                   setNextPage(1);
@@ -70,6 +76,7 @@ export function AccessPolicyList() {
           </KDrawer>
         </div>
         <TanstackSuspensePaginated
+          fallback={<ClientListSkeleton />}
           currentPage={currentPage}
           RenderPaginationIndicators={({ currentPage }) => (
             <TanstackSuspense
@@ -105,8 +112,8 @@ export function AccessPolicyList() {
                         onChange={(newValue) =>
                           setNumberOfItemsPerPage(Number(newValue))
                         }
-                        label="Cases per page"
-                        name="cases_per_page"
+                        label="Policies per page"
+                        name="policies_per_page"
                         options={[2, 5, 10, 25, 50, 75, 100].map((p) => ({
                           name: p,
                           value: p,
@@ -177,15 +184,119 @@ export function AccessPolicyList() {
                             <tr>
                               <th className="px-4 text-start py-1">Name</th>
                               <th className="px-4 text-start py-1">Created</th>
+                              <th></th>
                             </tr>
                           </thead>
                           <tbody className="">
                             {accessPolicies.map(
-                              ({ name, created_at }, index) => (
+                              (
+                                { id, name, description, created_at },
+                                index
+                              ) => (
                                 <tr key={index} className="border-t">
                                   <td className="px-4 py-1">{name}</td>
                                   <td className="px-4 py-1">
                                     {new Date(created_at).toDateString()}
+                                  </td>
+                                  <td className="pr-2 flex justify-end">
+                                    <Tooltip
+                                      title={
+                                        <div>
+                                          <NavLink
+                                            to={`/dashboard/policies/details/${id}`}
+                                            className="flex items-center gap-2 px-2 py-1"
+                                          >
+                                            <ViewfinderCircleIcon height={16} />
+                                            <span>See More</span>
+                                          </NavLink>
+                                          <DeleteModal
+                                            passKey="delete policy"
+                                            anchorClassName="flex items-center gap-2 px-2 py-1 cursor-pointer"
+                                            anchorContent={
+                                              <>
+                                                <TrashIcon height={16} />
+                                                <span>Delete</span>
+                                              </>
+                                            }
+                                            onSubmit={async () =>
+                                              handleRequest<null>({
+                                                func: axiosDelete,
+                                                args: [
+                                                  APIS.authorization.accessPolicies.destroy.replace(
+                                                    "<:policyId>",
+                                                    id
+                                                  ),
+                                                ],
+                                              }).then((res) => {
+                                                queryClient.invalidateQueries({
+                                                  queryKey: [
+                                                    TANSTACK_QUERY_KEYS.ACCESS_POLICY_LIST,
+
+                                                    itemsPerPage,
+                                                    currentPage,
+                                                  ],
+                                                });
+                                                if (res.status === "ok") {
+                                                  return {
+                                                    status: "success",
+                                                    message:
+                                                      "Access policy deleted successfully.",
+                                                  };
+                                                }
+
+                                                if (res.status === "403") {
+                                                  return {
+                                                    status: "error",
+                                                    message: `${res.errors.status}: ${res.errors.error}`,
+                                                  };
+                                                }
+
+                                                return {
+                                                  status: "error",
+                                                  message:
+                                                    "Sorry, an error occured!",
+                                                };
+                                              })
+                                            }
+                                          >
+                                            <h3>
+                                              You are about to delete this
+                                              access policy
+                                            </h3>
+                                            <div className="border rounded">
+                                              <div className="flex items-start">
+                                                <span className="w-24 px-4 py-1 border-r">
+                                                  ID
+                                                </span>
+                                                <span className="flex-grow px-4 py-1 break-all">
+                                                  {id}
+                                                </span>
+                                              </div>
+                                              <div className="border-t flex items-start">
+                                                <span className="w-24 px-4 py-1 border-r">
+                                                  Name
+                                                </span>
+                                                <span className="flex-grow px-4 py-1">
+                                                  {name}
+                                                </span>
+                                              </div>
+                                              <div className="border-t flex items-start">
+                                                <span className="w-24 px-4 py-1 border-r">
+                                                  Description
+                                                </span>
+                                                <span className="flex-grow px-4 py-1">
+                                                  {description}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </DeleteModal>
+                                        </div>
+                                      }
+                                    >
+                                      <span className="text-teal-600">
+                                        <More />
+                                      </span>
+                                    </Tooltip>
                                   </td>
                                 </tr>
                               )

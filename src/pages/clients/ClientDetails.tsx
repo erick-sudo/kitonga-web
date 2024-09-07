@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import DeleteModal from "../../ui/modals/DeleteModal";
 import { EditModal } from "../../ui/modals/EditModal";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ApacheEChart, areaChartOptions } from "../../ui/ApacheEChart";
 
 export function ClientDetails() {
   const navigate = useNavigate();
@@ -253,14 +254,24 @@ export function ClientDetails() {
                     if (data.status === "ok" && data.result) {
                       const tally = data.result;
 
+                      const statuses = Object.entries(tally).map(([k]) => k);
+
                       return (
-                        <div className="grid">
-                          {Object.entries(tally).map(([k, v], index) => (
-                            <div key={index} className="flex">
-                              <span className="w-56 px-4 py-1">{k}</span>
-                              <span className="flex-grow px-4 py-1">{v}</span>
-                            </div>
-                          ))}
+                        <div className="bg-white rounded border shadow p-4 zero-size-horizontal-scrollbar">
+                          <ApacheEChart
+                            options={areaChartOptions({
+                              title: "Cases tally by status",
+                              xAxisLabels: statuses,
+                              series: [
+                                {
+                                  name: "Number of cases",
+                                  color: "teal",
+                                  data: statuses.map((k) => tally[k]),
+                                },
+                              ],
+                            })}
+                            className="min-h-96 border"
+                          />
                         </div>
                       );
                     }

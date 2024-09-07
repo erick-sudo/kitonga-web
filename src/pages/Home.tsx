@@ -1,11 +1,17 @@
 import { CodeBracketIcon } from "@heroicons/react/24/outline";
+import {
+  ApacheEChart,
+  areaChartOptions,
+  pieChartOptions,
+} from "../ui/ApacheEChart";
 
 export default function Home() {
+  const brands = ["Asus", "Dell", "Hp", "Lenovo"];
   return (
     <div className="p-12">
       <h3>Home</h3>
 
-      <Card
+      {/* <Card
         icon={{
           content: <CodeBracketIcon height={24} />,
           height: 96,
@@ -18,7 +24,33 @@ export default function Home() {
         background="white"
       >
         <div className="h-48"></div>
-      </Card>
+      </Card> */}
+      <ApacheEChart
+        options={areaChartOptions({
+          title: "Brand Sales",
+          xAxisLabels: ["Asus", "Dell", "Hp", "Lenovo"],
+          series: [{ name: "Sales", color: "teal", data: [10, 67, 23, 45] }],
+        })}
+        className="h-96"
+      />
+
+      <ApacheEChart
+        options={pieChartOptions({
+          title: "Brand Purchases",
+          series: [
+            {
+              name: "Purchases",
+              radius: "50%",
+              data: brands.map((b) => ({
+                name: b,
+                value: Math.random() * 100,
+                color: "red",
+              })),
+            },
+          ],
+        })}
+        className="h-96"
+      />
     </div>
   );
 }

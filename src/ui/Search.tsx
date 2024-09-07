@@ -136,21 +136,29 @@ export function LazySearch<T>({
           {children}
         </div>
 
-        <div className={`grid ${viewPortClassName}`}>
-          {items.map((item, idx) => (
-            <div
-              onClick={() => {
-                if (typeof receiveSelection === "function") {
-                  receiveSelection(item);
-                }
-              }}
-              className={`${idx === 0 && ""} cursor-pointer ${childClassName}`}
-              key={idx}
-            >
-              <RenderItem item={item} q={search} />
-            </div>
-          ))}
-        </div>
+        {items.length > 0 ? (
+          <div className={`grid ${viewPortClassName}`}>
+            {items.map((item, idx) => (
+              <div
+                onClick={() => {
+                  if (typeof receiveSelection === "function") {
+                    receiveSelection(item);
+                  }
+                }}
+                className={`${
+                  idx === 0 && ""
+                } cursor-pointer ${childClassName}`}
+                key={idx}
+              >
+                <RenderItem item={item} q={search} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            {!!search && <div className="p-2 border">No results found...</div>}
+          </>
+        )}
       </div>
     </div>
   );

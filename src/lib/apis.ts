@@ -12,17 +12,18 @@ export const APIS = {
       index: `${baseUrl}/authorization/access_policies`,
       show: `${baseUrl}/authorization/access_policies/<:policyId>`,
       create: `${baseUrl}/authorization/access_policies`,
-      destroy: `${baseUrl}/authorization/access_policies<:policyId>`,
+      destroy: `${baseUrl}/authorization/access_policies/<:policyId>`,
       count: `${baseUrl}/authorization/access_policies/stats/count`,
     },
     resourceActions: {
       index: `${baseUrl}/authorization/resource_actions`,
       show: `${baseUrl}/authorization/resource_actions/<:actionId>`,
       create: `${baseUrl}/authorization/resource_actions`,
-      destroy: `${baseUrl}/authorization/resource_actions<:actionId>`,
+      destroy: `${baseUrl}/authorization/resource_actions/<:actionId>`,
       count: `${baseUrl}/authorization/resource_actions/stats/count`,
-      search: `${baseUrl}/authorization/resource_actions/query/search`,
+      
     },
+    searchResource: `${baseUrl}/authorization/policy_search/<:resource>`, 
   },
   statistics: {
     casesCount: `${baseUrl}/stats/cases/count`,
