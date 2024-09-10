@@ -13,30 +13,55 @@ export interface Principal extends Entity {
   email: string;
 }
 
+export interface PolicyUser extends Entity {
+  username: string;
+  email: string;
+}
+
+export type PolicyClient = Principal;
+
+export interface User extends Principal, TimeStamps {
+  address: string;
+  contact_number: string;
+}
+
 export interface CurrentUser {
   principal: Principal;
   grant: "user" | "client";
   authorities: string[];
 }
 
-export type PrincipalResourceType = | "iam" | "role" | "group" | "client"
+export interface GrantedAuthority extends Entity, TimeStamps {
+  name: string;
+}
 
-export type ResourceType = PrincipalResourceType  | "resourceaction" | "case";
+export type Role = GrantedAuthority;
+
+export interface Group extends GrantedAuthority {
+  roles: Role[];
+}
+
+export type PrincipalResourceType = "iam" | "role" | "group" | "client";
+
+export type ResourceType = PrincipalResourceType | "resourceaction" | "case";
 
 export type KRN = `krn:${ResourceType}:${string}:${string}`;
 
-export type ResourceActionKRN = `krn:resourceaction:${string}:${string}`
+export type ResourceActionKRN = `krn:resourceaction:${string}:${string}`;
 
-export type PrincipalKRN = `krn:${PrincipalResourceType}:${string}:${string}`
+export type PrincipalKRN = `krn:${PrincipalResourceType}:${string}:${string}`;
 
 export interface ResourceAction extends Entity, TimeStamps {
   name: string;
 }
 
-export interface AccessPolicy extends Entity, TimeStamps {
+export interface BriefAccessPolicy extends Entity, TimeStamps {
   name: string;
   effect: "Deny" | "Allow";
   description: string;
+}
+
+export interface AccessPolicy extends BriefAccessPolicy {
   actions: ResourceActionKRN[];
   principals: PrincipalKRN[];
   resources: KRN[];

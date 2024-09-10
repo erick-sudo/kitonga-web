@@ -11,7 +11,7 @@ import {
   axiosPatch,
   axiosPost,
 } from "../../lib/axiosLib";
-import { Client, Population } from "../../lib/definitions";
+import { User, Population } from "../../lib/definitions";
 import { TANSTACK_QUERY_KEYS } from "../../lib/KEYS";
 import {
   TanstackSuspense,
@@ -30,83 +30,98 @@ import { Search } from "../../ui/Search";
 import { useContext, useState } from "react";
 import DeleteModal from "../../ui/modals/DeleteModal";
 import { Add, More } from "@mui/icons-material";
-import TableValues from "../../ui/TableValues";
 import { KTooltip } from "../../ui/KTooltip";
+import TableValues from "../../ui/TableValues";
+import { AlertResponse } from "../../ui/definitions";
 import { AlertContext } from "../Dashboard";
 import { RequestErrorsWrapperNode } from "../../ui/DisplayObject";
-import { AlertResponse } from "../../ui/definitions";
 
-export function ClientList() {
+const endpoints = {
+  index: APIS.users.index,
+  search: APIS.users.searchUsers,
+};
+
+export function UserList() {
   const handleRequest = useAPI();
   const queryClient = useQueryClient();
+  const { pushAlert } = useContext(AlertContext);
   const [queryStringParams, _setQueryStringParams] = useSearchParams();
   const { currentPage, itemsPerPage, setNextPage, setNumberOfItemsPerPage } =
     usePagination();
-  const { pushAlert } = useContext(AlertContext);
-  const [api, setApi] = useState<"index" | "search">("index");
+  const [api, setApi] = useState<keyof typeof endpoints>("index");
   const [queryParams, setQueryParams] = useState<
     Record<string, string | number>
   >({});
 
-  async function handleCreateClient(payload: Record<string, string | number>) {
+  const refresh = () => {
+    queryClient.invalidateQueries({
+      queryKey: [
+        TANSTACK_QUERY_KEYS.USER_LIST,
+        api,
+        currentPage,
+        itemsPerPage,
+        queryParams,
+      ],
+    });
+    queryClient.invalidateQueries({
+      queryKey: [
+        TANSTACK_QUERY_KEYS.USER_COUNT,
+        api,
+        currentPage,
+        itemsPerPage,
+        queryParams,
+      ],
+    });
+  };
+
+  async function handleCreateUser(payload: Record<string, string | number>) {
     const res = await handleRequest({
       func: axiosPost,
-      args: [APIS.clients.index, payload],
+      args: [APIS.users.index, payload],
     });
     if (res.status === "ok") {
-      queryClient.invalidateQueries({
-        queryKey: [
-          TANSTACK_QUERY_KEYS.CLIENT_LIST,
-          api,
-          queryParams,
-          itemsPerPage,
-        ],
-      });
-      pushAlert({
-        status: "success",
-        message: "Successfully created a new client.",
-      });
+      refresh();
+      pushAlert(
+        {
+          status: "success",
+          message: `Successfully recorded a new user.`,
+        },
+        10000
+      );
       return true;
     } else {
-      pushAlert({
-        status: "error",
-        message: (
-          <RequestErrorsWrapperNode
-            fallbackMessage="Failed to create new client!"
-            requestError={res}
-          />
-        ),
-      });
+      pushAlert(
+        {
+          status: "error",
+          message: (
+            <RequestErrorsWrapperNode
+              fallbackMessage="Could not create user!"
+              requestError={res}
+            />
+          ),
+        },
+        10000
+      );
       return false;
     }
   }
 
-  async function updateClientDetails(
+  async function updateUserDetails(
     payload: Record<string, string | number>,
-    clientId: string
+    userId: string
   ) {
-    return await handleRequest<Client>({
+    return await handleRequest<User>({
       func: axiosPatch,
-      args: [
-        APIS.clients.mutate.replace("<:clientId>", `${clientId}`),
-        payload,
-      ],
+      args: [APIS.users.mutate.replace("<:userId>", `${userId}`), payload],
     }).then((res) => {
       if (res.status === "ok") {
-        queryClient.invalidateQueries({
-          queryKey: [
-            TANSTACK_QUERY_KEYS.CLIENT_LIST,
-            api,
-            queryParams,
-            itemsPerPage,
-          ],
-        });
+        refresh();
         pushAlert(
           {
             status: "success",
-            message: "Successfully updated client details.",
+            message: `Successfully updated user details.`,
           },
-          5000
+          10000
         );
         return true;
       } else {
@@ -115,12 +130,12 @@ export function ClientList() {
             status: "error",
             message: (
               <RequestErrorsWrapperNode
-                fallbackMessage="Failed to update client details."
+                fallbackMessage="Could not update user details."
                 requestError={res}
               />
             ),
           },
-          5000
+          10000
         );
         return false;
       }
@@ -149,12 +164,11 @@ export function ClientList() {
               setQueryStringParams(queryStringParams);
             }}
             options={[
-              "id",
-              "title",
-              "case_no_or_parties",
-              "file_reference",
-              "clients_reference",
-              "record",
+              "name",
+              "username",
+              "email",
+              "contact_number",
+              "address"
             ].map((k) => ({
               value: k,
               name: snakeCaseToTitleCase(k),
@@ -164,7 +178,7 @@ export function ClientList() {
           />
         </div> */}
         <Search
-          placeholder="Search clients..."
+          placeholder="Search users..."
           queryKey="v"
           onSubmit={(v) => {
             setQueryParams({
@@ -177,13 +191,13 @@ export function ClientList() {
         />
 
         <EditModal
-          title={<h3>Create new client</h3>}
+          title={<h3>Create new user</h3>}
           className="grid gap-2"
           anchorClassName="flex items-center gap-2 text-white px-4 rounded text-sm py-1 bg-teal-800 w-max cursor-pointer hover:bg-teal-600 duration-300"
           anchorContent={
             <>
               <Add height={16} />
-              <span className=" whitespace-nowrap">New Client</span>
+              <span className=" whitespace-nowrap">New User</span>
             </>
           }
           initial={{
@@ -234,21 +248,22 @@ export function ClientList() {
             },
             {
               name: "password_confirmation",
-              label: "password_confirmation",
+              label: "Confirm Password",
               options: { type: "password" },
               required: true,
             },
           ]}
-          onSubmit={handleCreateClient}
+          onSubmit={handleCreateUser}
         />
       </div>
       <TanstackSuspensePaginated
         currentPage={currentPage}
         queryKey={[
-          TANSTACK_QUERY_KEYS.CLIENT_LIST,
+          TANSTACK_QUERY_KEYS.USER_LIST,
           api,
-          queryParams,
+          currentPage,
           itemsPerPage,
+          queryParams,
         ]}
         queryFn={() => {
           const params: Record<string, string | number> = {
@@ -258,22 +273,21 @@ export function ClientList() {
             response: "data",
           };
 
-          return handleRequest<Client[]>({
+          return handleRequest<User[]>({
             func: axiosGet,
-            args: [
-              insertQueryParams(
-                api === "index"
-                  ? APIS.clients.index
-                  : APIS.clients.searchClients,
-                params
-              ),
-            ],
+            args: [insertQueryParams(endpoints[api], params)],
           });
         }}
         fallback={<ClientListSkeleton size={8} />}
         RenderPaginationIndicators={({ currentPage }) => (
           <TanstackSuspense
-            queryKey={[TANSTACK_QUERY_KEYS.CLIENT_COUNT, api]}
+            queryKey={[
+              TANSTACK_QUERY_KEYS.USER_COUNT,
+              api,
+              currentPage,
+              itemsPerPage,
+              queryParams,
+            ]}
             queryFn={() => {
               const params: Record<string, string | number> = {
                 page_number: currentPage,
@@ -284,14 +298,7 @@ export function ClientList() {
 
               return handleRequest<Population>({
                 func: axiosGet,
-                args: [
-                  insertQueryParams(
-                    api === "index"
-                      ? APIS.clients.index
-                      : APIS.clients.searchClients,
-                    params
-                  ),
-                ],
+                args: [insertQueryParams(endpoints[api], params)],
               });
             }}
             RenderData={({ data }) => {
@@ -305,8 +312,8 @@ export function ClientList() {
                       onChange={(newValue) =>
                         setNumberOfItemsPerPage(Number(newValue))
                       }
-                      label="Cases per page"
-                      name="cases_per_page"
+                      label="Users per page"
+                      name="users_per_page"
                       options={[5, 10, 25, 50, 75, 100].map((p) => ({
                         name: p,
                         value: p,
@@ -335,12 +342,7 @@ export function ClientList() {
 
               return (
                 <div className="rounded overflow-hidden shadow-sm">
-                  <Alert severity="warning">
-                    <RequestErrorsWrapperNode
-                      fallbackMessage="Could not count client!"
-                      requestError={data}
-                    />
-                  </Alert>
+                  <Alert severity="warning">Could not count users...</Alert>
                 </div>
               );
             }}
@@ -352,7 +354,7 @@ export function ClientList() {
               <div className="rounded overflow-hidden shadow-sm">
                 <Alert severity="warning">
                   <RequestErrorsWrapperNode
-                    fallbackMessage="Could not fetch clients!"
+                    fallbackMessage="Could not fetch users..."
                     requestError={data}
                   />
                 </Alert>
@@ -360,7 +362,7 @@ export function ClientList() {
             );
           }
 
-          const clients = data.result;
+          const users = data.result;
 
           return (
             <div className="grid gap-2">
@@ -375,7 +377,7 @@ export function ClientList() {
                         </th>
                         <th className="px-2 py-1 truncate text-start">Email</th>
                         <th className="px-2 py-1 truncate text-start">
-                          Contact Number
+                          Contact
                         </th>
                         <th className="px-2 py-1 truncate text-start">
                           Address
@@ -384,7 +386,7 @@ export function ClientList() {
                       </tr>
                     </thead>
                     <tbody>
-                      {clients.map(
+                      {users.map(
                         (
                           {
                             id,
@@ -423,13 +425,13 @@ export function ClientList() {
                                 tooltipContent={
                                   <>
                                     <EditModal
-                                      title={<h3>Modify client details</h3>}
+                                      title={<h3>Modify user details</h3>}
                                       className="grid gap-2"
                                       anchorClassName="flex items-center gap-2 px-2 py-1 cursor-pointer hover:text-white hover:bg-teal-800 duration-300"
                                       anchorContent={
                                         <>
                                           <PencilSquareIcon height={20} />
-                                          <span>Edit client details</span>
+                                          <span>Edit</span>
                                         </>
                                       }
                                       initial={{
@@ -475,64 +477,58 @@ export function ClientList() {
                                         },
                                       ]}
                                       onSubmit={async (payload) => {
-                                        return await updateClientDetails(
+                                        return await updateUserDetails(
                                           payload,
                                           id
                                         );
                                       }}
                                     />
                                     <DeleteModal
-                                      passKey={`delete client : ${username}`}
+                                      passKey={`delete user - ${username}`}
                                       onSubmit={() =>
                                         handleRequest<null>({
                                           func: axiosDelete,
                                           args: [
-                                            APIS.clients.mutate.replace(
-                                              "<:clientId>",
+                                            APIS.users.mutate.replace(
+                                              "<:userId>",
                                               id
                                             ),
                                           ],
                                         }).then((res) => {
-                                          queryClient.invalidateQueries({
-                                            queryKey: [
-                                              TANSTACK_QUERY_KEYS.CLIENT_LIST,
-                                              api,
-                                              queryParams,
-                                              itemsPerPage,
-                                            ],
-                                          });
+                                          let rs: AlertResponse;
                                           if (res.status === "ok") {
-                                            const rs: AlertResponse = {
+                                            refresh();
+                                            rs = {
                                               status: "success",
                                               message:
-                                                "Client deleted successfully.",
+                                                "User deleted successfully.",
                                             };
-                                            pushAlert(rs);
-                                            return rs;
                                           } else {
-                                            return {
+                                            rs = {
                                               status: "error",
                                               message: (
                                                 <RequestErrorsWrapperNode
-                                                  fallbackMessage="Could not delete client!"
+                                                  fallbackMessage="Could not delete user."
                                                   requestError={res}
                                                 />
                                               ),
                                             };
                                           }
+
+                                          pushAlert(rs, 10000);
+
+                                          return rs;
                                         })
                                       }
                                       anchorClassName="flex items-center gap-2 px-2 py-1 cursor-pointer hover:text-white hover:bg-red-800 duration-300"
                                       anchorContent={
                                         <>
                                           <TrashIcon height={20} />
-                                          <span>Delete client</span>
+                                          <span>Delete</span>
                                         </>
                                       }
                                     >
-                                      <h3>
-                                        You are about to delete this client
-                                      </h3>
+                                      <h3>You are about to delete this user</h3>
                                       <TableValues
                                         transformKeys={(k) =>
                                           snakeCaseToTitleCase(k)

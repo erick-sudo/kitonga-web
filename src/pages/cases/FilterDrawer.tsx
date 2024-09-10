@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { MUI_STYLES } from "../../lib/MUI_STYLES";
 import {
   Alert,
@@ -7,7 +7,6 @@ import {
   IconButton,
   Pagination,
   Radio,
-  setRef,
   Switch,
 } from "@mui/material";
 import { Close, Download } from "@mui/icons-material";
@@ -15,27 +14,24 @@ import {
   array2d,
   csvString,
   insertQueryParams,
+  joinArrays,
   snakeCaseToTitleCase,
 } from "../../lib/utils";
 import { LoadingButton } from "@mui/lab";
 import useAPI from "../../hooks/useAPI";
 import { axiosGet, axiosPost } from "../../lib/axiosLib";
 import { APIS } from "../../lib/apis";
-import {
-  CheckCircleIcon,
-  Cog8ToothIcon,
-  FaceSmileIcon,
-} from "@heroicons/react/24/outline";
+import { CheckCircleIcon, FaceSmileIcon } from "@heroicons/react/24/outline";
 import { ReactState } from "../../ui/definitions";
 import { filterFields } from "../../lib/data";
 import usePagination from "../../hooks/usePagination";
 import KTabs from "../../ui/Tabs";
 import * as XLSX from "xlsx";
-import InputSelection, { InputOption } from "../../ui/InputSelection";
-import { TANSTACK_QUERY_KEYS } from "../../lib/KEYS";
-import { TanstackSuspense } from "../../ui/TanstackSuspense";
-import { PartialClient, Population } from "../../lib/definitions";
-import { InputField } from "../../ui/modals/EditModal";
+import InputSelection from "../../ui/InputSelection";
+import { LazySearch } from "../../ui/Search";
+import { RequestErrorsWrapperNode } from "../../ui/DisplayObject";
+import { AlertContext } from "../Dashboard";
+import { PolicyClient, Population } from "../../lib/definitions";
 
 export type FilterCriteria = "match" | "strict";
 
@@ -107,6 +103,9 @@ export default function FilterDrawer({
   children?: React.ReactNode;
   state?: ReactState<boolean>;
 }) {
+  const [selectedClient, setSelectedClient] = useState<PolicyClient | null>(
+    null
+  );
   const [filterType, setFilterType] = useState<"single" | "range">("single");
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -134,6 +133,7 @@ export default function FilterDrawer({
     icon: <FaceSmileIcon height={24} />,
     ext: ".xlsx",
   });
+  const { pushAlert } = useContext(AlertContext);
   const [count, setCount] = useState<Population>({ count: 0 });
 
   const noResponseColumns = () =>
@@ -234,6 +234,11 @@ export default function FilterDrawer({
           } else {
             setCount(res.result as Population);
           }
+        } else {
+          pushAlert({
+            status: "error",
+            message: <RequestErrorsWrapperNode requestError={res} />,
+          });
         }
       })
       .finally(() => setFiltering(false));
@@ -359,140 +364,127 @@ export default function FilterDrawer({
                                 </h4>
                               ),
                               panel: (
-                                <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4 vertical-scrollbar p-2 border rounded max-h-48 bg-gray-50/75 shadow">
-                                  <TanstackSuspense
-                                    fallback={
-                                      <div className="flex items-center gap-2 bg-white shadow p-4 rounded">
-                                        <span className=" animate-spin">
-                                          <Cog8ToothIcon height={20} />
-                                        </span>
-                                        <div>Fetching clients...</div>
+                                <div className="grid gap-2 md:grid-cols-2 vertical-scrollbar p-2 border rounded max-h-48 bg-gray-50/75 shadow">
+                                  <div className="grid">
+                                    <div className="flex items-center">
+                                      <Checkbox
+                                        checked={requestColumns.case.includes(
+                                          "client_id"
+                                        )}
+                                        onChange={(_, checked) => {
+                                          if (
+                                            checked &&
+                                            !requestColumns.case.includes(
+                                              "client_id"
+                                            )
+                                          ) {
+                                            setRequestColumns((p) => ({
+                                              ...p,
+                                              case: [...p.case, "client_id"],
+                                            }));
+                                          } else {
+                                            setRequestColumns((p) => ({
+                                              ...p,
+                                              case: p.case.filter(
+                                                (k) => k !== "client_id"
+                                              ),
+                                            }));
+                                            delete requestPayload.case[
+                                              "client_id"
+                                            ];
+                                            setSelectedClient(null);
+                                          }
+                                        }}
+                                        size="small"
+                                        sx={MUI_STYLES.CheckBox}
+                                      />
+                                      <div className="">
+                                        {selectedClient
+                                          ? selectedClient.name
+                                          : "Select client"}
                                       </div>
-                                    }
-                                    queryKey={[TANSTACK_QUERY_KEYS.ALL_CLIENTS]}
-                                    queryFn={() =>
-                                      handleRequest<PartialClient[]>({
-                                        func: axiosGet,
-                                        args: [APIS.clients.getAllClients],
-                                      })
-                                    }
-                                    RenderData={({ data }) => {
-                                      if (data.status === "ok" && data.result) {
-                                        const clients = data.result;
+                                    </div>
 
-                                        const clientInputOptions: InputOption[] =
-                                          clients.map(({ id, name }) => ({
-                                            name,
-                                            level: 0,
-                                            type: "item",
-                                            value: id,
-                                          }));
-
-                                        return (
-                                          <>
-                                            {clients.length > 0 ? (
-                                              <div
-                                                className={`bg-white p-2 rounded shadow flex items-center ${
-                                                  requestColumns.case.includes(
-                                                    "client_id"
-                                                  ) &&
-                                                  "ring-1 ring-inset ring-teal-800"
-                                                }`}
-                                              >
-                                                <h5 className="flex gap-2 items-center">
-                                                  <Checkbox
-                                                    checked={requestColumns.case.includes(
-                                                      "client_id"
-                                                    )}
-                                                    onChange={(_, checked) => {
-                                                      if (
-                                                        checked &&
-                                                        !requestColumns.case.includes(
-                                                          "client_id"
-                                                        )
-                                                      ) {
-                                                        setRequestColumns(
-                                                          (p) => ({
-                                                            ...p,
-                                                            case: [
-                                                              ...p.case,
-                                                              "client_id",
-                                                            ],
-                                                          })
-                                                        );
-                                                      } else {
-                                                        setRequestColumns(
-                                                          (p) => ({
-                                                            ...p,
-                                                            case: p.case.filter(
-                                                              (k) =>
-                                                                k !==
-                                                                "client_id"
-                                                            ),
-                                                          })
-                                                        );
-                                                        delete requestPayload
-                                                          .case["client_id"];
-                                                      }
-                                                    }}
-                                                    size="small"
-                                                    sx={MUI_STYLES.CheckBox}
-                                                  />
-                                                  {/* <span>Client</span> */}
-                                                </h5>
-                                                <InputField
-                                                  enabled={requestColumns.case.includes(
-                                                    "client_id"
-                                                  )}
-                                                  name="client_id"
-                                                  label="Select Client"
-                                                  onChange={(newValue) => {
-                                                    setRequestPayload((p) => ({
-                                                      ...p,
-                                                      case: {
-                                                        ...p.case,
-                                                        client_id: newValue,
-                                                      },
-                                                    }));
-                                                  }}
-                                                  value={
-                                                    requestPayload.case[
-                                                      "client_id"
-                                                    ] || ""
-                                                  }
-                                                  options={{
-                                                    type: "select",
-                                                    options: [
-                                                      {
-                                                        name: "None",
-                                                        level: 0,
-                                                        type: "item",
-                                                        value: "",
-                                                      },
-                                                      ...clientInputOptions,
-                                                    ],
-                                                  }}
-                                                  required={true}
-                                                />
-                                              </div>
-                                            ) : (
-                                              <div className="flex items-center justify-between gap-2 bg-teal-50 shadow p-4 rounded">
-                                                No clients found...
-                                              </div>
-                                            )}
-                                          </>
-                                        );
+                                    <LazySearch
+                                      disabled={
+                                        !requestColumns.case.includes(
+                                          "client_id"
+                                        )
                                       }
-                                      return (
-                                        <div>
-                                          <Alert severity="error">
-                                            Sorry, an error occured while
-                                            fetching clients
-                                          </Alert>
+                                      containerClassName="h-10 flex-grow"
+                                      zIndex={20}
+                                      viewPortClassName="max-h-36 vertical-scrollbar"
+                                      className="border bg-white shadow w-full rounded"
+                                      fetchItems={(q: string) =>
+                                        handleRequest<PolicyClient[]>({
+                                          func: axiosGet,
+                                          args: [
+                                            insertQueryParams(
+                                              APIS.clients.searchAllClients,
+                                              { q }
+                                            ),
+                                          ],
+                                        }).then((res) => {
+                                          if (
+                                            res.status === "ok" &&
+                                            res.result
+                                          ) {
+                                            return res.result;
+                                          }
+                                          return [];
+                                        })
+                                      }
+                                      RenderItem={({
+                                        q,
+                                        item: { id, name, username, email },
+                                      }) => (
+                                        <div
+                                          onClick={() => {
+                                            setRequestPayload((p) => ({
+                                              ...p,
+                                              case: {
+                                                ...p.case,
+                                                client_id: id,
+                                              },
+                                            }));
+                                            setSelectedClient({
+                                              id,
+                                              name,
+                                              username,
+                                              email,
+                                            });
+                                          }}
+                                          className="grid w-full text-start text-sm hover:bg-teal-600 hover:border-t-teal-600 hover:text-white px-4 py-1 duration-300 border-b"
+                                        >
+                                          <span>
+                                            <em>name</em>&nbsp;
+                                            {joinArrays(
+                                              String(name),
+                                              q,
+                                              "bg-black rounded px-0.5 text-white"
+                                            )}
+                                          </span>
+                                          <span>
+                                            <em>username</em>&nbsp;
+                                            {joinArrays(
+                                              String(username),
+                                              q,
+                                              "bg-black rounded px-0.5 text-white"
+                                            )}
+                                          </span>
+                                          <span>
+                                            <em>email</em>&nbsp;
+                                            {joinArrays(
+                                              String(email),
+                                              q,
+                                              "bg-black rounded px-0.5 text-white"
+                                            )}
+                                          </span>
                                         </div>
-                                      );
-                                    }}
-                                  />
+                                      )}
+                                    />
+                                  </div>
+
                                   {filterFields.matchColumns.case.map(
                                     (f, index) => (
                                       <div
@@ -1205,7 +1197,7 @@ export default function FilterDrawer({
                             className={`flex items-center gap-2 px-4 duration-300 ${
                               exportFormat.ext === format.ext
                                 ? "bg-teal-800 text-white hover:bg-teal-600"
-                                : "bg-gray-300 text-gray-300"
+                                : "bg-gray-300"
                             }`}
                             key={index}
                           >

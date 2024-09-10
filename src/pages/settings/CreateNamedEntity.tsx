@@ -4,19 +4,27 @@ import { Alert, LoadingButton } from "@mui/lab";
 import { MUI_STYLES } from "../../lib/MUI_STYLES";
 import useAPI from "../../hooks/useAPI";
 import { axiosPost } from "../../lib/axiosLib";
-import { APIS } from "../../lib/apis";
 import {
   containsWhiteSpaceCharacter,
   startsWithUpperCase,
 } from "../../lib/utils";
 import { AlertResponse } from "../../ui/definitions";
+import { Divider } from "@mui/material";
+import { RequestErrorsWrapperNode } from "../../ui/DisplayObject";
 
-export function CreateResourceActionForm({
+export function CreateNamedEntity({
   onNewRecord,
+  entity,
+  endpoint,
 }: {
   onNewRecord: () => void;
+  endpoint: string;
+  entity: string;
 }) {
-  const [formData, setFormData] = useState({ name: "" });
+  const [formData, setFormData] = useState<{
+    name: string;
+    description?: string;
+  }>({ name: "", description: "" });
   const [submitting, setSubmitting] = useState(false);
   const handleRequest = useAPI();
   const [createRes, setCreateRes] = useState<AlertResponse | null>(null);
@@ -30,21 +38,24 @@ export function CreateResourceActionForm({
     setSubmitting(true);
     handleRequest({
       func: axiosPost,
-      args: [APIS.authorization.resourceActions.create, formData],
+      args: [endpoint, formData],
     })
       .then((res) => {
         if (res.status === "ok") {
           setCreateRes({
             status: "success",
-            message: "Action created successfully",
+            message: `${entity} created successfully`,
           });
           onNewRecord();
-        } else if (res.status === "422") {
-          setCreateRes({ status: "error", message: res.errors.errors.name[0] });
-        } else if (res.status === "error") {
+        } else {
           setCreateRes({
             status: "error",
-            message: res.message,
+            message: (
+              <RequestErrorsWrapperNode
+                fallbackMessage={`Could not create ${entity}`}
+                requestError={res}
+              />
+            ),
           });
         }
       })
@@ -59,16 +70,19 @@ export function CreateResourceActionForm({
       className="grid gap-2"
     >
       {createRes && (
-        <div className="border shadow overflow-hidden rounded-lg">
-          <Alert severity={createRes.status}>{createRes.message}</Alert>
-        </div>
+        <>
+          <div className="border shadow overflow-hidden rounded-lg">
+            <Alert severity={createRes.status}>{createRes.message}</Alert>
+          </div>
+          <Divider />
+        </>
       )}
       <div className="border shadow overflow-hidden rounded-lg">
         <Alert
           sx={{ paddingY: 0 }}
           severity={formData.name ? "success" : "error"}
         >
-          The name of an action is required.
+          The name is required.
         </Alert>
         <Alert
           sx={{ paddingY: 0 }}
@@ -87,11 +101,22 @@ export function CreateResourceActionForm({
         sx={MUI_STYLES.FilledInputTextField3WhiteBg}
         required
         value={formData.name || ""}
-        onChange={(name) => setFormData({ name })}
+        onChange={(name) => setFormData((p) => ({ ...p, name }))}
         options={{
           type: "text",
         }}
-        label="ActionName"
+        label={`${entity} Name`}
+        name="name"
+      />
+
+      <InputField
+        sx={MUI_STYLES.FilledInputTextField3WhiteBg}
+        value={formData.description || ""}
+        onChange={(description) => setFormData((p) => ({ ...p, description }))}
+        options={{
+          type: "textarea",
+        }}
+        label="Description"
         name="name"
       />
       <LoadingButton

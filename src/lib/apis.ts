@@ -8,12 +8,33 @@ export const APIS = {
     changePassword: `${baseUrl}/change/password`,
   },
   authorization: {
+    roles: {
+      index: `${baseUrl}/authorization/roles`,
+      show: `${baseUrl}/authorization/roles/<:roleId>`,
+      create: `${baseUrl}/authorization/roles`,
+      destroy: `${baseUrl}/authorization/roles/<:roleId>`,
+      count: `${baseUrl}/authorization/roles/stats/count`,
+    },
+    groups: {
+      index: `${baseUrl}/authorization/groups`,
+      show: `${baseUrl}/authorization/groups/<:groupId>`,
+      create: `${baseUrl}/authorization/groups`,
+      destroy: `${baseUrl}/authorization/groups/<:groupId>`,
+      count: `${baseUrl}/authorization/groups/stats/count`,
+      roles: `${baseUrl}/authorization/groups/<:groupId>/roles`,
+      users: `${baseUrl}/authorization/groups/<:groupId>/users`,
+      addRoles: `${baseUrl}/authorization/groups/<:groupId>/roles/add`,
+      addUsers: `${baseUrl}/authorization/groups/<:groupId>/users/add`,
+      removeRoles: `${baseUrl}/authorization/groups/<:groupId>/roles/remove`,
+      removeUsers: `${baseUrl}/authorization/groups/<:groupId>/users/remove`,
+    },
     accessPolicies: {
       index: `${baseUrl}/authorization/access_policies`,
       show: `${baseUrl}/authorization/access_policies/<:policyId>`,
       create: `${baseUrl}/authorization/access_policies`,
       destroy: `${baseUrl}/authorization/access_policies/<:policyId>`,
       count: `${baseUrl}/authorization/access_policies/stats/count`,
+      search: `${baseUrl}/authorization/search/access_policies`,
     },
     resourceActions: {
       index: `${baseUrl}/authorization/resource_actions`,
@@ -21,9 +42,8 @@ export const APIS = {
       create: `${baseUrl}/authorization/resource_actions`,
       destroy: `${baseUrl}/authorization/resource_actions/<:actionId>`,
       count: `${baseUrl}/authorization/resource_actions/stats/count`,
-      
     },
-    searchResource: `${baseUrl}/authorization/policy_search/<:resource>`, 
+    searchResource: `${baseUrl}/authorization/policy_search/<:resource>`,
   },
   statistics: {
     casesCount: `${baseUrl}/stats/cases/count`,
@@ -35,9 +55,6 @@ export const APIS = {
   pagination: {
     getCases: `${baseUrl}/pages/cases`,
     getClients: `${baseUrl}/pages/clients/`,
-    filter: {
-      filterCases: `${baseUrl}/filter/cases/<:q>/<:v>`,
-    },
     search: {
       searchCases: `${baseUrl}/search/cases`,
       searchClients: `${baseUrl}/search/clients`,
@@ -48,9 +65,16 @@ export const APIS = {
     caseRangeFilter: `${baseUrl}/filter/range/cases`,
   },
   users: {
-    getBriefUsers: `${baseUrl}/users/brief`,
+    index: `${baseUrl}/iam/users`,
+    mutate: `${baseUrl}/iam/users/<:userId>`,
+    searchUsers: `${baseUrl}/iam/search/users`,
   },
   clients: {
+    index: `${baseUrl}/iam/clients`,
+    searchClients: `${baseUrl}/iam/search/clients`,
+    mutate: `${baseUrl}/iam/clients/<:clientId>`,
+    searchAllClients: `${baseUrl}/iam/search/all_clients`,
+
     getAllClients: `${baseUrl}/clients/all`,
     postClient: `${baseUrl}/clients/new`,
     patchClient: `${baseUrl}/clients/<:clientId>/update`,

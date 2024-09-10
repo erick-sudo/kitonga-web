@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ManualModal } from "../../ui/modals/ManualModal";
 import { Alert } from "@mui/material";
 import { DeleteResponse } from "../../ui/definitions";
+import { KCopyContent } from "../KCopyContent";
 
 export default function DeleteModal({
   anchorClassName,
@@ -51,10 +52,18 @@ export default function DeleteModal({
           </div>
         )}
 
-        <div className="">
+        <fieldset className="grid gap-2 border border-red-500/50 p-2 rounded bg-red-50/20">
+          <legend className="text-red-500 text-sm">Danger zone</legend>
           <h3>
-            Type &apos;<span className="font-semibold text-red-800">{passKey}</span>
-            &apos; below to confirm.
+            Type &apos;
+            <span className="font-semibold text-red-800">{passKey}</span>
+            &apos;&nbsp;
+            <KCopyContent
+              className="inline-block border text-xs border-gray-500 text-gray-500 rounded"
+              iconClassName="py-0.5"
+              value={passKey}
+            />
+            &nbsp; below to confirm.
           </h3>
           <div className="flex p-1 border rounded">
             <input
@@ -70,7 +79,7 @@ export default function DeleteModal({
               {deleting ? "Deleting..." : "Confirm"}
             </button>
           </div>
-        </div>
+        </fieldset>
       </form>
     </ManualModal>
   );

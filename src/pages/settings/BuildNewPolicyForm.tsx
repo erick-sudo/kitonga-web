@@ -17,6 +17,7 @@ import { insertQueryParams, joinArrays } from "../../lib/utils";
 import KRadioGroup from "../../ui/KRadioGroup";
 import { Alert } from "@mui/material";
 import { KValidationErrors } from "../../ui/KValidationErrors";
+import { RequestErrorsWrapperNode } from "../../ui/DisplayObject";
 
 export function BuildNewPolicyForm({
   onNewRecord,
@@ -77,7 +78,7 @@ export function BuildNewPolicyForm({
         if (res.status === "ok") {
           setCreateRes({
             status: "success",
-            message: "Action created successfully",
+            message: "Policy created successfully",
           });
           clearFormData();
           onNewRecord();
@@ -88,10 +89,15 @@ export function BuildNewPolicyForm({
               "Error processing your input fields please check and try again.",
           });
           setErrors(res.errors.errors as Record<string, string[]>);
-        } else if (res.status === "error") {
+        } else {
           setCreateRes({
             status: "error",
-            message: res.message,
+            message: (
+              <RequestErrorsWrapperNode
+                fallbackMessage={`Could not create policy`}
+                requestError={res}
+              />
+            ),
           });
         }
       })
@@ -173,36 +179,39 @@ export function BuildNewPolicyForm({
 
         {/* Actions */}
         <div>
-          <label className="text-sm">
+          <div className="text-sm">
             Select actions <span className="text-red-500">*</span>
-          </label>
+          </div>
           {/* Selected actions */}
-          <div className="grid gap-2">
-            <div className="flex flex-wrap gap-x-1 gap-y-1">
-              {createPolicyFormData.actions.map((action, index) => {
-                const name = action.slice(action.lastIndexOf(":") + 1);
-                return (
-                  <div
-                    key={index}
-                    className="cursor-pointer border text-sm pl-1.5 bg-white flex gap-2 overflow-hidden"
-                  >
-                    <span>{name}</span>
-                    <span
-                      onClick={() =>
-                        setCreatePolicyFormData((p) => ({
-                          ...p,
-                          actions: p.actions.filter((a) => a !== action),
-                        }))
-                      }
-                      className="flex items-center justify-center font-bold w-6 bg-teal-800 text-white hover:bg-teal-600 duration-300"
+          <div className="grid gap-1">
+            {createPolicyFormData.actions.length > 0 && (
+              <div className="flex flex-wrap gap-x-1 gap-y-1">
+                {createPolicyFormData.actions.map((action, index) => {
+                  const name = action.slice(action.lastIndexOf(":") + 1);
+                  return (
+                    <div
+                      key={index}
+                      className="cursor-pointer border text-sm pl-1.5 bg-white flex gap-2 overflow-hidden"
                     >
-                      x
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                      <span>{name}</span>
+                      <span
+                        onClick={() =>
+                          setCreatePolicyFormData((p) => ({
+                            ...p,
+                            actions: p.actions.filter((a) => a !== action),
+                          }))
+                        }
+                        className="flex items-center justify-center font-bold w-6 bg-teal-800 text-white hover:bg-teal-600 duration-300"
+                      >
+                        x
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             <LazySearch
+              containerClassName="h-10"
               zIndex={20}
               viewPortClassName="max-h-36 vertical-scrollbar"
               className="border bg-gray-50 shadow-sm"
@@ -255,39 +264,43 @@ export function BuildNewPolicyForm({
 
         {/* Principals */}
         <div>
-          <label className="text-sm">
+          <div className="text-sm">
             Select principals <span className="text-red-500">*</span>
-          </label>
+          </div>
 
           {/* Selected Principals */}
-          <div className="flex flex-wrap gap-x-1 gap-y-1">
-            {createPolicyFormData.principals.map((principal, index) => {
-              const [, resource, attribute, value] = principal.split(":");
-              return (
-                <div
-                  key={index}
-                  className="cursor-pointer border shadow-sm text-sm pl-1.5 bg-white flex gap-2 overflow-hidden"
-                >
-                  <span className="border-r pr-2">{resource}</span>
-                  <span className="border-r pr-2">{attribute}</span>
-                  <span className="grid">
-                    <span className="max-w-80 truncate">{value}</span>
-                  </span>
-                  <span
-                    onClick={() =>
-                      setCreatePolicyFormData((p) => ({
-                        ...p,
-                        principals: p.principals.filter((a) => a !== principal),
-                      }))
-                    }
-                    className="flex items-center justify-center font-bold w-6 bg-teal-800 text-white hover:bg-teal-600 duration-300"
+          {createPolicyFormData.principals.length > 0 && (
+            <div className="flex flex-wrap gap-x-1 gap-y-1">
+              {createPolicyFormData.principals.map((principal, index) => {
+                const [, resource, attribute, value] = principal.split(":");
+                return (
+                  <div
+                    key={index}
+                    className="cursor-pointer border shadow-sm text-sm pl-1.5 bg-white flex gap-2 overflow-hidden"
                   >
-                    x
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                    <span className="border-r pr-2">{resource}</span>
+                    <span className="border-r pr-2">{attribute}</span>
+                    <span className="grid">
+                      <span className="max-w-80 truncate">{value}</span>
+                    </span>
+                    <span
+                      onClick={() =>
+                        setCreatePolicyFormData((p) => ({
+                          ...p,
+                          principals: p.principals.filter(
+                            (a) => a !== principal
+                          ),
+                        }))
+                      }
+                      className="flex items-center justify-center font-bold w-6 bg-teal-800 text-white hover:bg-teal-600 duration-300"
+                    >
+                      x
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           <div className="text-sm">
             Principals are either users, clients, roles or groups
@@ -305,6 +318,7 @@ export function BuildNewPolicyForm({
 
           <div className="grid">
             <LazySearch
+              containerClassName="h-10"
               zIndex={19}
               viewPortClassName="max-h-44 vertical-scrollbar gap-2"
               className="border bg-gray-50 shadow-sm"
@@ -402,9 +416,9 @@ export function BuildNewPolicyForm({
 
         {/* Resources */}
         <div>
-          <label className="text-sm">
+          <div className="text-sm">
             Select resources <span className="text-red-500">*</span>
-          </label>
+          </div>
 
           {/* Selected Reources */}
           <div className="flex flex-wrap gap-x-1 gap-y-1">
@@ -452,6 +466,7 @@ export function BuildNewPolicyForm({
 
           <div className="grid">
             <LazySearch
+              containerClassName="h-10"
               zIndex={18}
               viewPortClassName="max-h-52 vertical-scrollbar gap-2"
               className="border bg-gray-50 shadow-sm"

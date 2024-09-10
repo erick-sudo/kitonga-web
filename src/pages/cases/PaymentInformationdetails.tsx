@@ -31,7 +31,6 @@ import {
 import { Progress } from "../../ui/Progress";
 import { KitongaColorScheme } from "../../lib/MUI_STYLES";
 import { Masonry } from "@mui/lab";
-import { ManualModal } from "../../ui/modals/ManualModal";
 import {
   capitalize,
   formatCurrency,
@@ -40,16 +39,19 @@ import {
 import { EditModal } from "../../ui/modals/EditModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { AddPayment } from "./AddPayment";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { paymentMethods } from "../../lib/data";
-import DeleteInstallmentModal from "./DeleteInstallmentModal";
 import DeleteModal from "../../ui/modals/DeleteModal";
+import { AlertContext } from "../Dashboard";
+import { AlertResponse } from "../../ui/definitions";
+import { RequestErrorsWrapperNode } from "../../ui/DisplayObject";
 
 export function PaymentInformationDetails({ caseId }: { caseId: string }) {
   const handleRequest = useAPI();
   const paymentInformationKey = `${TANSTACK_QUERY_KEYS.PAYMENT_INFORMATION_DETAILS}#${caseId}`;
   const queryClient = useQueryClient();
   const [addingInstallment, setAddingInstallment] = useState(false);
+  const { pushAlert } = useContext(AlertContext);
 
   async function submitInitialPaymentInformation(
     payload: InitializePaymentInformationDto
@@ -74,8 +76,26 @@ export function PaymentInformationDetails({ caseId }: { caseId: string }) {
           queryClient.invalidateQueries({
             queryKey: [paymentInformationKey],
           });
+          pushAlert(
+            {
+              status: "success",
+              message: `New installment recorded for case ${caseId}.`,
+            },
+            10000
+          );
         } else {
-          console.log(res);
+          pushAlert(
+            {
+              status: "error",
+              message: (
+                <RequestErrorsWrapperNode
+                  fallbackMessage={`Sorry! an error occured while adding a new installment for this case.`}
+                  requestError={res}
+                />
+              ),
+            },
+            5000
+          );
         }
       })
       .finally(() => {
@@ -97,8 +117,31 @@ export function PaymentInformationDetails({ caseId }: { caseId: string }) {
         queryClient.invalidateQueries({
           queryKey: [paymentInformationKey],
         });
+        pushAlert(
+          {
+            status: "success",
+            message: `The following payment information fields have been successfully updated: ${Object.keys(
+              payload
+            ).join(", ")}.`,
+          },
+          10000
+        );
         return true;
       } else {
+        pushAlert(
+          {
+            status: "error",
+            message: (
+              <RequestErrorsWrapperNode
+                fallbackMessage={`Could not update ${Object.keys(payload).join(
+                  ", "
+                )}.`}
+                requestError={res}
+              />
+            ),
+          },
+          5000
+        );
         return false;
       }
     });
@@ -475,9 +518,27 @@ export function PaymentInformationDetails({ caseId }: { caseId: string }) {
                                                   paymentInformationKey,
                                                 ],
                                               });
+                                              pushAlert(
+                                                {
+                                                  status: "success",
+                                                  message: `You have succesfully updated installment details for ${id}.`,
+                                                },
+                                                10000
+                                              );
                                               return true;
                                             } else {
-                                              console.log(res);
+                                              pushAlert(
+                                                {
+                                                  status: "success",
+                                                  message: (
+                                                    <RequestErrorsWrapperNode
+                                                      fallbackMessage={`Sorry, could not update detaisl for this installment: ${id}`}
+                                                      requestError={res}
+                                                    />
+                                                  ),
+                                                },
+                                                10000
+                                              );
                                               return false;
                                             }
                                           });
@@ -509,26 +570,28 @@ export function PaymentInformationDetails({ caseId }: { caseId: string }) {
                                             queryClient.invalidateQueries({
                                               queryKey: [paymentInformationKey],
                                             });
+                                            let rs: AlertResponse;
                                             if (res.status === "ok") {
-                                              return {
+                                              rs = {
                                                 status: "success",
                                                 message:
                                                   "Installment deleted successfully.",
                                               };
-                                            }
-
-                                            if (res.status === "403") {
-                                              return {
+                                            } else {
+                                              rs = {
                                                 status: "error",
-                                                message: `${res.errors.status}: ${res.errors.error}`,
+                                                message: (
+                                                  <RequestErrorsWrapperNode
+                                                    fallbackMessage="Failed to delete installment!"
+                                                    requestError={res}
+                                                  />
+                                                ),
                                               };
                                             }
 
-                                            return {
-                                              status: "error",
-                                              message:
-                                                "Sorry, an error occured!",
-                                            };
+                                            pushAlert(rs, 10000);
+
+                                            return rs;
                                           })
                                         }
                                       >
@@ -626,7 +689,16 @@ export function PaymentInformationDetails({ caseId }: { caseId: string }) {
           );
         }
 
-        return <div></div>;
+        return (
+          <div className="rounded border shadow overflow-hidden">
+            <Alert severity="error">
+              <RequestErrorsWrapperNode
+                fallbackMessage="Failed to fetch payment information!"
+                requestError={data}
+              />
+            </Alert>
+          </div>
+        );
       }}
     />
   );

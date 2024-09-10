@@ -1,37 +1,42 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import useAPI from "../../hooks/useAPI";
 import { useQueryClient } from "@tanstack/react-query";
 import { ManualModal } from "../../ui/modals/ManualModal";
 import { Add } from "@mui/icons-material";
-import { TanstackSuspense } from "../../ui/TanstackSuspense";
-import { Cog8ToothIcon } from "@heroicons/react/24/outline";
 import { TANSTACK_QUERY_KEYS } from "../../lib/KEYS";
-import { PartialClient } from "../../lib/definitions";
+import { Case, PolicyClient } from "../../lib/definitions";
 import { axiosGet, axiosPost } from "../../lib/axiosLib";
 import { APIS } from "../../lib/apis";
-import { InputField, InputFields } from "../../ui/modals/EditModal";
+import { InputFields } from "../../ui/modals/EditModal";
 import { caseStates } from "../../lib/data";
-import { Alert, Button } from "@mui/material";
+import { Button } from "@mui/material";
 import { MUI_STYLES } from "../../lib/MUI_STYLES";
 import { LoadingButton } from "@mui/lab";
-import { NavLink } from "react-router-dom";
-import { InputOption } from "../../ui/InputSelection";
+import { insertQueryParams, joinArrays } from "../../lib/utils";
+import { LazySearch } from "../../ui/Search";
+import { BackspaceIcon } from "@heroicons/react/24/outline";
+import { AlertContext } from "../Dashboard";
+import { RequestErrorsWrapperNode } from "../../ui/DisplayObject";
 
 export function OpenNewCaseModal() {
   const handleRequest = useAPI();
   const queryClient = useQueryClient();
+  const { pushAlert } = useContext(AlertContext);
   const [newCase, setNewCase] = useState<Record<string, string | number>>({
     client_id: "",
     title: "",
     description: "",
     case_no_or_parties: "",
   });
+  const [selectedClient, setSelectedClient] = useState<PolicyClient | null>(
+    null
+  );
   const [creating, setCreating] = useState(false);
   const [openNewCaseModal, setOpenNewCaseModal] = useState(false);
 
   function handleCreateCase() {
     setCreating(true);
-    handleRequest({
+    handleRequest<Case>({
       func: axiosPost,
       args: [APIS.cases.postCase, newCase],
     })
@@ -41,8 +46,26 @@ export function OpenNewCaseModal() {
           queryClient.invalidateQueries({
             queryKey: [TANSTACK_QUERY_KEYS.CASE_LIST],
           });
+          pushAlert(
+            {
+              status: "success",
+              message: "Case created successfully",
+            },
+            10000
+          );
         } else {
-          alert("Error");
+          pushAlert(
+            {
+              status: "error",
+              message: (
+                <RequestErrorsWrapperNode
+                  fallbackMessage="Could not create case!"
+                  requestError={res}
+                />
+              ),
+            },
+            10000
+          );
         }
       })
       .finally(() => {
@@ -69,77 +92,88 @@ export function OpenNewCaseModal() {
         className="grid gap-2"
       >
         <h3>Open new case</h3>
-        <TanstackSuspense
-          fallback={
-            <div className="flex items-center gap-2 bg-white shadow p-4 rounded">
-              <span className=" animate-spin">
-                <Cog8ToothIcon height={20} />
-              </span>
-              <div>Fetching clients...</div>
+        <div className="grid">
+          <div className="flex items-center justify-between border-t border-x bg-white rounded-t shadow">
+            <div className="px-4 text-sm">
+              {selectedClient ? selectedClient.name : "Select client"}
             </div>
-          }
-          queryKey={[TANSTACK_QUERY_KEYS.ALL_CLIENTS]}
-          queryFn={() =>
-            handleRequest<PartialClient[]>({
-              func: axiosGet,
-              args: [APIS.clients.getAllClients],
-            })
-          }
-          RenderData={({ data }) => {
-            if (data.status === "ok" && data.result) {
-              const clients = data.result;
+            <span
+              className="px-2 py-1"
+              onClick={() => {
+                setNewCase((p) => {
+                  delete p["client_id"];
+                  return p;
+                });
+                setSelectedClient(null);
+              }}
+            >
+              <BackspaceIcon height={24} />
+            </span>
+          </div>
 
-              const clientInputOptions: InputOption[] = clients.map(
-                ({ id, name }) => ({
-                  name,
-                  level: 0,
-                  type: "item",
-                  value: id,
-                })
-              );
-
-              return (
-                <>
-                  {clients.length > 0 ? (
-                    <InputField
-                      name="client_id"
-                      label="Select Client"
-                      value={newCase["client_id"] || ""}
-                      onChange={(newValue) => {
-                        setNewCase((p) => ({ ...p, client_id: newValue }));
-                      }}
-                      options={{
-                        type: "select",
-                        options: [
-                          { name: "None", level: 0, type: "item", value: "" },
-                          ...clientInputOptions,
-                        ],
-                      }}
-                      required={true}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-between gap-2 bg-teal-50 shadow p-4 rounded">
-                      No client found...
-                      <NavLink
-                        className="px-4 text-sm py-1 bg-teal-800 text-white rounded hover:bg-teal-600 duration-300"
-                        to="/dashboard/clients"
-                      >
-                        Create Client
-                      </NavLink>
-                    </div>
-                  )}
-                </>
-              );
+          <LazySearch
+            containerClassName="h-10 flex-grow"
+            zIndex={20}
+            viewPortClassName="max-h-64 vertical-scrollbar"
+            className="border bg-white w-full rounded-b shadow"
+            fetchItems={(q: string) =>
+              handleRequest<PolicyClient[]>({
+                func: axiosGet,
+                args: [insertQueryParams(APIS.clients.searchAllClients, { q })],
+              }).then((res) => {
+                if (res.status === "ok" && res.result) {
+                  return res.result;
+                }
+                return [];
+              })
             }
-            return (
-              <div>
-                <Alert severity="error">
-                  Sorry, an error occured while fetching clients
-                </Alert>
+            RenderItem={({
+              q,
+              item: { id, name, username, email },
+              clearOnSelect,
+            }) => (
+              <div
+                onClick={() => {
+                  setNewCase((p) => ({ ...p, client_id: id }));
+                  setSelectedClient({
+                    id,
+                    name,
+                    username,
+                    email,
+                  });
+                  clearOnSelect();
+                }}
+                className="grid w-full text-start text-sm hover:bg-teal-600 hover:border-t-teal-600 hover:text-white px-4 py-1 duration-300 border-b"
+              >
+                <span>
+                  <em>name</em>&nbsp;
+                  {joinArrays(
+                    String(name),
+                    q,
+                    "bg-black rounded px-0.5 text-white"
+                  )}
+                </span>
+                <span>
+                  <em>username</em>&nbsp;
+                  {joinArrays(
+                    String(username),
+                    q,
+                    "bg-black rounded px-0.5 text-white"
+                  )}
+                </span>
+                <span>
+                  <em>email</em>&nbsp;
+                  {joinArrays(
+                    String(email),
+                    q,
+                    "bg-black rounded px-0.5 text-white"
+                  )}
+                </span>
               </div>
-            );
-          }}
-        />
+            )}
+          />
+        </div>
+
         {newCase["client_id"] && (
           <>
             <InputFields

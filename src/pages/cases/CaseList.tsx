@@ -24,12 +24,16 @@ import { EditModal } from "../../ui/modals/EditModal";
 import { caseStates } from "../../lib/data";
 import { useQueryClient } from "@tanstack/react-query";
 import { OpenNewCaseModal } from "./OpenNewCaseModal";
-import { insertQueryParams } from "../../lib/utils";
+import { insertQueryParams, snakeCaseToTitleCase } from "../../lib/utils";
 import usePagination from "../../hooks/usePagination";
 import { Search } from "../../ui/Search";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import DeleteModal from "../../ui/modals/DeleteModal";
 import FilterDrawer from "./FilterDrawer";
+import TableValues from "../../ui/TableValues";
+import { AlertContext } from "../Dashboard";
+import { RequestErrorsWrapperNode } from "../../ui/DisplayObject";
+import { AlertResponse } from "../../ui/definitions";
 
 const endpoints = {
   index: { data: APIS.pagination.getCases, count: APIS.statistics.casesCount },
@@ -37,10 +41,10 @@ const endpoints = {
     data: APIS.pagination.search.searchCases,
     count: APIS.statistics.searchCasesCount,
   },
-  filter: { data: APIS.pagination.getCases, count: APIS.statistics.casesCount },
 };
 
 export function CaseList() {
+  const { pushAlert } = useContext(AlertContext);
   const handleRequest = useAPI();
   const queryClient = useQueryClient();
   const [queryStringParams, _setQueryStringParams] = useSearchParams();
@@ -72,8 +76,22 @@ export function CaseList() {
             itemsPerPage,
           ],
         });
+        pushAlert({
+          status: "success",
+          message: "Case updated successfully",
+        });
         return true;
       } else {
+        pushAlert({
+          status: "error",
+
+          message: (
+            <RequestErrorsWrapperNode
+              fallbackMessage="Sorry, an error occured while updating case details, please your input fields and try again."
+              requestError={res}
+            />
+          ),
+        });
         return false;
       }
     });
@@ -215,7 +233,12 @@ export function CaseList() {
 
               return (
                 <div className="rounded overflow-hidden shadow-sm">
-                  <Alert severity="warning">Could not count cases...</Alert>
+                  <Alert severity="warning">
+                    <RequestErrorsWrapperNode
+                      fallbackMessage="Could not count cases..."
+                      requestError={data}
+                    />
+                  </Alert>
                 </div>
               );
             }}
@@ -225,16 +248,21 @@ export function CaseList() {
           if (data.status !== "ok" || !!!data.result) {
             return (
               <div className="rounded overflow-hidden shadow-sm">
-                <Alert severity="warning">Could not fetch cases...</Alert>
+                <Alert severity="warning">
+                  <RequestErrorsWrapperNode
+                    fallbackMessage="Could not fetch cases..."
+                    requestError={data}
+                  />
+                </Alert>
               </div>
             );
           }
 
           return (
-            <div className="grid gap-2">
+            <div className="grid rounded overflow-hidden border shadow">
               {data.result.length > 0 ? (
                 <ControlledAccordions
-                  className="shadow rounded bg-gray-50"
+                  className="border-b bg-white last:border-none"
                   expandedClassName="bg-teal-900"
                   expand={{
                     ExpandIcon: ({ expanded }) => (
@@ -430,23 +458,23 @@ export function CaseList() {
                                 ],
                               });
                               if (res.status === "ok") {
-                                return {
+                                const rs: AlertResponse = {
                                   status: "success",
                                   message: "Case deleted successfully.",
                                 };
-                              }
-
-                              if (res.status === "403") {
+                                pushAlert(rs);
+                                return rs;
+                              } else {
                                 return {
                                   status: "error",
-                                  message: `${res.errors.status}: ${res.errors.error}`,
+                                  message: (
+                                    <RequestErrorsWrapperNode
+                                      fallbackMessage="Failed to delete case!"
+                                      requestError={res}
+                                    />
+                                  ),
                                 };
                               }
-
-                              return {
-                                status: "error",
-                                message: "Sorry, an error occured!",
-                              };
                             })
                           }
                           anchorClassName="px-2 py-1 rounded text-sm text-white flex items-center gap-2 cursor-pointer bg-teal-800 hover:text-red-800 hover:ring-1 hover:ring-red-800 duration-300"
@@ -457,24 +485,29 @@ export function CaseList() {
                           }
                         >
                           <h3>You are about to delete this case</h3>
-                          <div className="border rounded">
-                            <div className="flex items-start">
-                              <span className="w-24 px-4 py-1 border-r">
-                                ID
-                              </span>
-                              <span className="flex-grow px-4 py-1 break-all">
-                                {id}
-                              </span>
-                            </div>
-                            <div className="border-t flex items-start">
-                              <span className="w-24 px-4 py-1 border-r">
-                                Title
-                              </span>
-                              <span className="flex-grow px-4 py-1">
-                                {title}
-                              </span>
-                            </div>
-                          </div>
+                          <TableValues
+                            transformKeys={(k) => snakeCaseToTitleCase(k)}
+                            className="rounded text-sm"
+                            values={{
+                              id,
+                              title,
+                              file_reference,
+                              clients_reference,
+                            }}
+                            valueClassName="gap-2"
+                            copy={{
+                              fields: [
+                                "id",
+                                "file_reference",
+                                "clients_reference",
+                              ],
+                              copyContentProps: {
+                                iconClassName: "p-0.5",
+                                className:
+                                  "flex items-center border border-gray-500 text-gray-500 rounded",
+                              },
+                            }}
+                          />
                         </DeleteModal>
                       </div>
                     </div>

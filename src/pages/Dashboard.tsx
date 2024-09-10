@@ -1,5 +1,11 @@
-import { Drawer, IconButton, useMediaQuery, useTheme } from "@mui/material";
-import React from "react";
+import {
+  Alert,
+  Drawer,
+  IconButton,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
+import React, { createContext, useState } from "react";
 import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { DashboardContext } from "../context/DashboardContext";
 import { useSpring, animated } from "@react-spring/web";
@@ -15,14 +21,16 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { capitalize } from "../lib/utils";
-import { ReactStateSetter } from "../ui/definitions";
+import { AlertResponse, ReactStateSetter } from "../ui/definitions";
 import { KitongaColorScheme } from "../lib/MUI_STYLES";
 import { Cases } from "./cases/Cases";
-import { Folder, Logout } from "@mui/icons-material";
+import { Close, Folder, Logout } from "@mui/icons-material";
 import NotFound from "../ui/NotFound";
 import { Clients } from "./clients/Clients";
 import { DeepSearchModal } from "./DeepSearchModal";
 import { Settings } from "./settings/Settings";
+import { Footer } from "./Footer";
+import { Users } from "./users/Users";
 
 const navLinks = [
   {
@@ -50,7 +58,7 @@ const navLinks = [
     activePattern: /^\/dashboard\/users[\/]*$/,
   },
   {
-    name: "Settings",
+    name: "Access",
     path: "/dashboard/settings",
     icon: <Cog8ToothIcon height={20} />,
     activePattern: /^\/dashboard\/settings[\/]*$/,
@@ -83,13 +91,35 @@ function NavigationLinks({
   );
 }
 
-const specialNavigationSegments: string[] = ["details"];
+export type PushAlert = (newAlert: AlertResponse, delay?: number) => void;
+
+export const AlertContext = createContext<{ pushAlert: PushAlert }>({
+  pushAlert: () => {},
+});
+
+const moduleAlerts: Record<string, AlertResponse> = {};
+
+const specialNavigationSegments: string[] = ["details", "policies", "groups"];
 
 export function Dashboard() {
+  const [_lastAlert, setLastAlert] = useState(Date.now());
   const { logout } = React.useContext(DashboardContext);
   const [hide, setHide] = React.useState(true);
   const theme = useTheme();
   const isMdOrLarger = useMediaQuery(theme.breakpoints.up("md"));
+  const pushAlert: PushAlert = (newAlert, delay = 10000) => {
+    const time = String(Date.now());
+    moduleAlerts[time] = newAlert;
+    setLastAlert(Date.now());
+    setTimeout(() => {
+      removeAlert(time);
+    }, delay);
+  };
+
+  const removeAlert = (time: string) => {
+    delete moduleAlerts[time];
+    setLastAlert(Date.now());
+  };
 
   const sideNavSprings = useSpring({
     width: isMdOrLarger && !hide ? 150 : 0,
@@ -98,9 +128,48 @@ export function Dashboard() {
     config: { tension: 250, friction: 30 },
   });
 
+  const notificationHostSprings = useSpring({
+    left: isMdOrLarger && !hide ? 150 : 0,
+    config: { tension: 250, friction: 30 },
+  });
+
   return (
-    <div>
+    <AlertContext.Provider value={{ pushAlert }}>
       <div className="fixed inset-0 flex flex-col">
+        <animated.div
+          style={notificationHostSprings}
+          className="fixed right-0 z-[9999]"
+        >
+          {/* {alerts.map((_alert, index) => ( */}
+          {Object.entries(moduleAlerts).map(([k, v], index) => (
+            <div key={index} className="border-b last:border-none">
+              <Alert
+                sx={{
+                  "& .MuiAlert-message": {
+                    flexGrow: 1,
+                  },
+                }}
+                closeText="close"
+                square
+                severity={v.status}
+              >
+                <div className="flex w-full flex-grow">
+                  <div className="flex-grow">{v.message}</div>
+                  <div>
+                    <span
+                      onClick={() => {
+                        removeAlert(k);
+                      }}
+                    >
+                      <Close fontSize="small" />
+                    </span>
+                  </div>
+                </div>
+              </Alert>
+            </div>
+          ))}
+        </animated.div>
+
         {/* ============ Top App Bar ============= */}
         <TopAppBar toggleDrawer={setHide} expandSideNav={hide} />
 
@@ -165,19 +234,23 @@ export function Dashboard() {
             </div>
           </Drawer>
           <div className="flex-grow relative bg-gray-100">
-            <div className="zero-size-vertical-scrollbar absolute inset-y-0 left-0 right-0 flex flex-col">
-              <Routes>
-                <Route path="" element={<Analytics />} />
-                <Route path="cases/*" element={<Cases />} />
-                <Route path="clients/*" element={<Clients />} />
-                <Route path="settings" element={<Settings />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+            <div className="zero-size-vertical-scrollbar absolute inset-0 flex flex-col">
+              <div className="flex flex-col flex-grow">
+                <Routes>
+                  <Route path="" element={<Analytics />} />
+                  <Route path="cases/*" element={<Cases />} />
+                  <Route path="clients/*" element={<Clients />} />
+                  <Route path="users/*" element={<Users />} />
+                  <Route path="settings/*" element={<Settings />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </div>
+              <Footer />
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </AlertContext.Provider>
   );
 }
 
@@ -235,7 +308,7 @@ const TopAppBar: React.FC<{
             <div className="px-4 border-l font-semibold">Kitonga</div>
           </div>
         </div>
-        <div className="px-4 py-1 bg-gray-100 zero-size-horizontal-scrollbar flex items-center gap-1">
+        <div className="px-4 py-1 zero-size-horizontal-scrollbar flex items-center gap-1">
           {/* <Breadcrumbs
             separator={
               <span className="h-1 w-1 bg-teal-800 rounded-full"></span>

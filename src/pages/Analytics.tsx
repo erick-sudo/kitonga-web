@@ -17,6 +17,7 @@ import {
   areaChartOptions,
   pieChartOptions,
 } from "../ui/ApacheEChart";
+import { RequestErrorsWrapperNode } from "../ui/DisplayObject";
 
 export function Analytics() {
   return (
@@ -79,12 +80,13 @@ function CasesPerClientTally() {
           );
         }
 
-        // Could not fetch recent cases
         return (
           <div className="shadow rounded mt-2">
             <Alert severity="error">
-              <span className="block">{data.errors?.status}</span>
-              <span className="block">{data.errors?.error}</span>
+              <RequestErrorsWrapperNode
+                fallbackMessage="Could not tally client's cases."
+                requestError={data}
+              />
             </Alert>
           </div>
         );
@@ -113,7 +115,10 @@ function SixMostRecentCases() {
             <div className="bg-white p-2 rounded border shadow">
               <h3 className="pl-4 py-2 font-semibold flex items-center justify-between">
                 <span>Most recent cases</span>
-                <NavLink to="/dashboard/cases" className="flex items-center text-teal-600 hover:text-teal-800 duration-300">
+                <NavLink
+                  to="/dashboard/cases"
+                  className="flex items-center text-teal-600 hover:text-teal-800 duration-300"
+                >
                   <span>More</span>
                   <EllipsisVerticalIcon height={20} />
                 </NavLink>
@@ -167,8 +172,10 @@ function SixMostRecentCases() {
         return (
           <div className="shadow rounded mt-2">
             <Alert severity="error">
-              <span className="block">{data.errors?.status}</span>
-              <span className="block">{data.errors?.error}</span>
+              <RequestErrorsWrapperNode
+                fallbackMessage="Could not fetch recent cases."
+                requestError={data}
+              />
             </Alert>
           </div>
         );
@@ -208,12 +215,13 @@ function Counts() {
           );
         }
 
-        // Could not tally all cases
         return (
           <div className="shadow rounded mt-2">
             <Alert severity="error">
-              <span className="block">{data.errors?.status}</span>
-              <span className="block">{data.errors?.error}</span>
+              <RequestErrorsWrapperNode
+                fallbackMessage="Could not fetch data counts."
+                requestError={data}
+              />
             </Alert>
           </div>
         );
@@ -242,9 +250,10 @@ function AllCasesTally() {
 
           return (
             <div className="bg-white rounded border shadow p-4 zero-size-horizontal-scrollbar">
+              <h3 className="font-bold text-center">Cases tally by status</h3>
               <ApacheEChart
                 options={areaChartOptions({
-                  title: "Cases tally by status",
+                  title: "",
                   xAxisLabels: statuses,
                   series: [
                     {
@@ -264,8 +273,10 @@ function AllCasesTally() {
         return (
           <div className="shadow rounded mt-2">
             <Alert severity="error">
-              <span className="block">{data.errors?.status}</span>
-              <span className="block">{data.errors?.error}</span>
+              <RequestErrorsWrapperNode
+                fallbackMessage="Could not obtain a tally for cases."
+                requestError={data}
+              />
             </Alert>
           </div>
         );

@@ -1,15 +1,41 @@
-import { CodeBracketIcon } from "@heroicons/react/24/outline";
-import {
-  ApacheEChart,
-  areaChartOptions,
-  pieChartOptions,
-} from "../ui/ApacheEChart";
+// import { CodeBracketIcon } from "@heroicons/react/24/outline";
+// import {
+//   ApacheEChart,
+//   areaChartOptions,
+//   pieChartOptions,
+// } from "../ui/ApacheEChart";
+// import { KTooltip } from "../ui/KTooltip";
+
+import { CSSProperties } from "react";
+
+
 
 export default function Home() {
-  const brands = ["Asus", "Dell", "Hp", "Lenovo"];
+  const brands = [
+    "Asus",
+    "Dell",
+    "Hp",
+    { Lenovo: "age" },
+    { linux: ["Kali", "Ubuntu", "Zorin", "Arch"] },
+  ];
   return (
     <div className="p-12">
       <h3>Home</h3>
+
+      {/* <DisplayObject
+        entryClassName="flex"
+        className="text-sm"
+        indent={16}
+        value={{ name: "Erick", schools: "jkuat", brands }}
+      /> */}
+
+      {/* <KTooltip
+        tooltipContent={
+          <div className="">He sells sea shells at the sea shore</div>
+        }
+      >
+        More
+      </KTooltip> */}
 
       {/* <Card
         icon={{
@@ -25,7 +51,7 @@ export default function Home() {
       >
         <div className="h-48"></div>
       </Card> */}
-      <ApacheEChart
+      {/* <ApacheEChart
         options={areaChartOptions({
           title: "Brand Sales",
           xAxisLabels: ["Asus", "Dell", "Hp", "Lenovo"],
@@ -50,12 +76,12 @@ export default function Home() {
           ],
         })}
         className="h-96"
-      />
+      /> */}
     </div>
   );
 }
 
-function Card({
+export function Card({
   icon,
   children,
   border: { color, width },

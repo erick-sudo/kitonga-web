@@ -5,7 +5,13 @@ import { MUI_STYLES } from "../../lib/MUI_STYLES";
 import { Button, SxProps, TextField, Theme } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 
-export type InputFieldType = "text" | "number" | "select" | "textarea";
+export type InputFieldType =
+  | "text"
+  | "number"
+  | "select"
+  | "textarea"
+  | "email"
+  | "password";
 
 export interface TextFieldOptions {
   type: "text" | "number" | "email" | "password";
@@ -72,7 +78,6 @@ export function InputField({
       margin="none"
       required={required}
       fullWidth
-      id="identity"
       label={label}
       name={label}
       multiline={options.type === "textarea"}
@@ -155,7 +160,9 @@ export function EditModal<T extends Record<string, string | number>>({
             }, recordedChanges)
           )
             .then((res) => {
-              setOpen(!!!res);
+              if (res) {
+                setOpen(false);
+              }
             })
             .finally(() => {
               setWaitingSubmission(false);

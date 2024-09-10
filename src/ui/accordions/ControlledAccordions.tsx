@@ -42,8 +42,8 @@ export function ControlledAccordions<S, D>({
     <>
       {items.map((item, idx) => (
         <div
-          className={`${className} ${
-            expanded === `panel${idx}` && `${expandedClassName}`
+          className={`${
+            expanded === `panel${idx}` ? `${expandedClassName}` : `${className}`
           }`}
           key={idx}
         >

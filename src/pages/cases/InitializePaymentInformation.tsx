@@ -15,6 +15,7 @@ import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { Add } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 import { TANSTACK_QUERY_KEYS } from "../../lib/KEYS";
+import { RequestErrorsWrapperNode } from "../../ui/DisplayObject";
 
 export function InitializePaymentInformation({
   caseId,
@@ -40,7 +41,7 @@ export function InitializePaymentInformation({
     payment_method: "Cash",
     payment_type: "installment",
   });
-  const [error, setError] = useState("");
+  const [error, setError] = useState<React.ReactNode>("");
 
   const updatePayment = (newPayment: Payment | null) => {
     setPaymentInformation({
@@ -73,11 +74,7 @@ export function InitializePaymentInformation({
                 });
                 setError("");
               } else {
-                if (res.status === "409") {
-                  setError(res.errors.message);
-                } else {
-                  setError("Could not initialize payment information");
-                }
+                setError(<RequestErrorsWrapperNode requestError={res} />);
               }
             })
             .finally(() => setLoading(false));

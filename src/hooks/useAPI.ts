@@ -9,22 +9,25 @@ interface HandleRequestParams<T> {
   errorCallback?: (error: AxiosError) => void;
 }
 
-// Types for the result of the request
-interface RequestSuccess<T> {
-  status: "ok";
-  result?: T;
+export interface RequestMessages {
+  message: string;
+  statusText: string;
 }
 
-interface RequestError {
+export interface RequestSuccess<T> extends RequestMessages {
+  status: "ok";
+  result: T;
+  errors?: undefined;
+}
+
+export interface RequestError extends RequestMessages {
   status: string;
-  result: null;
-  message: string;
-  statusText?: string;
-  errors?: any;
+  errors: any;
+  result?: undefined;
 }
 
 // Combine success and error result types
-type RequestResult<T> = RequestSuccess<T> | RequestError;
+export type RequestResult<T> = RequestSuccess<T> | RequestError;
 
 export default function useAPI() {
   const handleRequest = async <T>({
@@ -51,6 +54,8 @@ export default function useAPI() {
       return {
         status: "ok",
         result: response.data,
+        statusText: "SUCCESS",
+        message: "Success",
       };
     } catch (error) {
       if (typeof errorCallback === "function") {
@@ -62,15 +67,15 @@ export default function useAPI() {
         const statusCode = axiosError.response.status;
         return {
           status: `${statusCode}`,
-          result: null,
           message: axiosError.message,
           statusText: axiosError.response.statusText,
           errors: axiosError.response.data,
         };
       } else {
         return {
+          statusText: "unexpected",
           status: "error",
-          result: null,
+          errors: axiosError.message,
           message: axiosError.message,
         };
       }

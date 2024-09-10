@@ -12,19 +12,24 @@ import DeleteModal from "../../ui/modals/DeleteModal";
 import { EditModal } from "../../ui/modals/EditModal";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { ApacheEChart, areaChartOptions } from "../../ui/ApacheEChart";
+import { useContext } from "react";
+import { AlertContext } from "../Dashboard";
+import { AlertResponse } from "../../ui/definitions";
+import { RequestErrorsWrapperNode } from "../../ui/DisplayObject";
 
 export function ClientDetails() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { clientId } = useParams();
   const handleRequest = useAPI();
+  const { pushAlert } = useContext(AlertContext);
   const clientKey = `${TANSTACK_QUERY_KEYS.CLIENT_DETAILS}#${clientId}`;
 
   async function updateClientDetails(payload: Record<string, string | number>) {
     return await handleRequest<Client>({
       func: axiosPatch,
       args: [
-        APIS.clients.patchClient.replace("<:clientId>", `${clientId}`),
+        APIS.clients.mutate.replace("<:clientId>", `${clientId}`),
         payload,
       ],
     }).then((res) => {
@@ -32,8 +37,29 @@ export function ClientDetails() {
         queryClient.invalidateQueries({
           queryKey: [clientKey],
         });
+        pushAlert(
+          {
+            status: "success",
+            message: `Successfully updated the following client details: ${Object.keys(
+              payload
+            ).join(", ")}.`,
+          },
+          10000
+        );
         return true;
       } else {
+        pushAlert(
+          {
+            status: "error",
+            message: (
+              <RequestErrorsWrapperNode
+                fallbackMessage="Could not update client details."
+                requestError={res}
+              />
+            ),
+          },
+          10000
+        );
         return false;
       }
     });
@@ -46,9 +72,7 @@ export function ClientDetails() {
         queryFn={() =>
           handleRequest<Client>({
             func: axiosGet,
-            args: [
-              APIS.clients.getClient.replace("<:clientId>", `${clientId}`),
-            ],
+            args: [APIS.clients.mutate.replace("<:clientId>", `${clientId}`)],
           })
         }
         RenderData={({ data }) => {
@@ -125,7 +149,6 @@ export function ClientDetails() {
                           email,
                           contact_number,
                           address,
-                          password: "",
                         }}
                         editableFields={[
                           {
@@ -158,12 +181,6 @@ export function ClientDetails() {
                             options: { type: "textarea", rows: 2 },
                             required: true,
                           },
-                          {
-                            name: "password",
-                            label: "Password",
-                            options: { type: "password" },
-                            required: true,
-                          },
                         ]}
                         onSubmit={updateClientDetails}
                       />
@@ -173,34 +190,33 @@ export function ClientDetails() {
                           handleRequest<null>({
                             func: axiosDelete,
                             args: [
-                              APIS.clients.deleteClient.replace(
-                                "<:clientId>",
-                                id
-                              ),
+                              APIS.clients.mutate.replace("<:clientId>", id),
                             ],
                           }).then((res) => {
                             queryClient.invalidateQueries({
                               queryKey: [clientKey],
                             });
+                            let rs: AlertResponse;
                             if (res.status === "ok") {
                               navigate("/dashboard/clients");
-                              return {
+                              rs = {
                                 status: "success",
                                 message: "Client deleted successfully.",
                               };
-                            }
-
-                            if (res.status === "403") {
-                              return {
+                            } else {
+                              rs = {
                                 status: "error",
-                                message: `${res.errors.status}: ${res.errors.error}`,
+                                message: (
+                                  <RequestErrorsWrapperNode
+                                    fallbackMessage="Could not delete client."
+                                    requestError={res}
+                                  />
+                                ),
                               };
                             }
 
-                            return {
-                              status: "error",
-                              message: "Sorry, an error occured!",
-                            };
+                            pushAlert(rs, 10000);
+                            return rs;
                           })
                         }
                         anchorClassName="px-2 py-1 rounded text-sm text-white flex items-center gap-2 cursor-pointer bg-teal-800 hover:text-red-800 hover:ring-1 hover:ring-red-800 duration-300"
@@ -280,8 +296,10 @@ export function ClientDetails() {
                     return (
                       <div className="shadow rounded mt-2">
                         <Alert severity="error">
-                          <span className="block">{data.errors?.status}</span>
-                          <span className="block">{data.errors?.error}</span>
+                          <RequestErrorsWrapperNode
+                            fallbackMessage="Could not tally client's cases."
+                            requestError={data}
+                          />
                         </Alert>
                       </div>
                     );
@@ -294,8 +312,10 @@ export function ClientDetails() {
           return (
             <div className="shadow rounded mt-2">
               <Alert severity="error">
-                <span className="block">{data.errors?.status}</span>
-                <span className="block">{data.errors?.error}</span>
+                <RequestErrorsWrapperNode
+                  fallbackMessage="Could not fetch client's details!."
+                  requestError={data}
+                />
               </Alert>
             </div>
           );

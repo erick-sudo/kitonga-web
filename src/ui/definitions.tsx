@@ -29,7 +29,7 @@ export const validateEmail = async (email: string) => {
 
 export interface AlertResponse {
   status: "success" | "error" | "warning" | "info";
-  message: string;
+  message: string | React.ReactNode;
 }
 
 export type DeleteResponse = AlertResponse;

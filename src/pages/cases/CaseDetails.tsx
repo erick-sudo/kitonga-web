@@ -13,12 +13,16 @@ import { useQueryClient } from "@tanstack/react-query";
 import KTabs from "../../ui/Tabs";
 import { caseStates } from "../../lib/data";
 import { PaymentInformationDetails } from "./PaymentInformationdetails";
+import { useContext } from "react";
+import { AlertContext } from "../Dashboard";
+import { RequestErrorsWrapperNode } from "../../ui/DisplayObject";
 
 export function CaseDetails() {
   const handleRequest = useAPI();
   const { caseId } = useParams();
   const caseDetailsQueryKey = `${TANSTACK_QUERY_KEYS.CASE_DETAILS}#${caseId}`;
   const queryClient = useQueryClient();
+  const { pushAlert } = useContext(AlertContext);
 
   async function updateCaseDetails(payload: Record<string, string | number>) {
     return await handleRequest<PaymentInformation>({
@@ -29,8 +33,23 @@ export function CaseDetails() {
         queryClient.invalidateQueries({
           queryKey: [caseDetailsQueryKey],
         });
+        pushAlert({
+          status: "success",
+          message: `The following fields for the case ${caseId} have been successfully updated: ${Object.keys(
+            payload
+          ).join(", ")}.`,
+        });
         return true;
       } else {
+        pushAlert({
+          status: "error",
+          message: (
+            <RequestErrorsWrapperNode
+              fallbackMessage="Sorry! an error occured while updating case details."
+              requestError={res}
+            />
+          ),
+        });
         return false;
       }
     });
@@ -217,8 +236,10 @@ export function CaseDetails() {
                 return (
                   <div className="shadow rounded mt-2">
                     <Alert severity="error">
-                      <span className="block">{data.errors?.status}</span>
-                      <span className="block">{data.errors?.error}</span>
+                      <RequestErrorsWrapperNode
+                        fallbackMessage="Could not fetch case details!."
+                        requestError={data}
+                      />
                     </Alert>
                   </div>
                 );
@@ -242,12 +263,13 @@ function ClientDetails({ client_id }: { client_id: string }) {
       queryFn={() =>
         handleRequest<Client>({
           func: axiosGet,
-          args: [APIS.clients.getClient.replace("<:clientId>", client_id)],
+          args: [APIS.clients.mutate.replace("<:clientId>", client_id)],
         })
       }
       RenderData={({ data }) => {
         if (data.status === "ok" && data.result) {
-          const { name, email, address, contact_number, username } = data.result;
+          const { name, email, address, contact_number, username } =
+            data.result;
 
           return (
             <div>
@@ -284,8 +306,9 @@ function ClientDetails({ client_id }: { client_id: string }) {
         return (
           <div className="shadow rounded mt-2">
             <Alert severity="error">
-              <span className="block">{data.errors?.status}</span>
-              <span className="block">{data.errors?.error}</span>
+              {data.errors.errors ||
+                data.errors.error ||
+                "Could not fetch client details!"}
             </Alert>
           </div>
         );
